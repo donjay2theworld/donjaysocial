@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DonJaySocial - Professional SMM Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <style>
+    body {
+      text-transform: none !important;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- AUTHENTICATION OVERLAY MODAL -->
+  <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden">
+      <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="flex items-center justify-between mb-8 pb-4 border-b border-slate-800">
+        <div class="flex items-center space-x-3">
+          <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-600/30">
+            <i class="fa-solid fa-bolt text-lg"></i>
+          </div>
+          <div>
+            <h2 id="auth-modal-title" class="text-xl font-bold text-white">Welcome Back</h2>
+            <p class="text-xs text-slate-400">Sign in to manage your SMM orders</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5">
+        <div>
+          <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Email Address</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-envelope"></i></span>
+            <input type="email" id="login-email" placeholder="name@example.com" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Password</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock"></i></span>
+            <input type="password" id="login-password" placeholder="••••••••" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+          </div>
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2">
+          <span>Sign In</span>
+          <i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+        <p class="text-center text-xs text-slate-400 mt-4">
+          Don't have an account? <button type="button" onclick="toggleAuthMode('signup')" class="text-indigo-400 font-semibold hover:underline">Create one</button>
+        </p>
+      </form>
+
+      <!-- SIGN UP FORM -->
+      <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-4 hidden">
+        <div>
+          <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1.5">Full Name</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-user"></i></span>
+            <input type="text" id="signup-name" placeholder="Isah Yusuf" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1.5">Email Address</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-envelope"></i></span>
+            <input type="email" id="signup-email" placeholder="name@example.com" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1.5">WhatsApp Number</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-brands fa-whatsapp"></i></span>
+            <input type="tel" id="signup-whatsapp" placeholder="+234..." required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1.5">Password</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock"></i></span>
+            <input type="password" id="signup-password" placeholder="At least 6 characters" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+          </div>
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 mt-2">
+          <span>Create Account</span>
+          <i class="fa-solid fa-user-plus text-xs"></i>
+        </button>
+        <p class="text-center text-xs text-slate-400 mt-2">
+          Already have an account? <button type="button" onclick="toggleAuthMode('login')" class="text-indigo-400 font-semibold hover:underline">Sign in</button>
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative">
+      <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
+        <h3 class="text-xl font-bold text-white flex items-center space-x-2"><i class="fa-solid fa-user-gear text-indigo-400"></i><span>Account Settings</span></h3>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="space-y-5">
+        <div>
+          <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">Your API Key (Keep Secret)</label>
+          <div class="flex items-center space-x-2">
+            <input type="text" id="settings-apikey" readonly class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-mono text-indigo-400 focus:outline-none">
+            <button onclick="copyApiKey()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition">Copy</button>
+          </div>
+        </div>
+        <form onsubmit="handleUpdateProfile(event)" class="space-y-4 pt-2">
+          <div>
+            <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">Full Name</label>
+            <input type="text" id="settings-name" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">WhatsApp Number</label>
+            <input type="text" id="settings-whatsapp" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+          </div>
+          <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition shadow-md">Save Changes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- API DOCS MODAL -->
+  <div id="docs-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
+        <h3 class="text-xl font-bold text-white flex items-center space-x-2"><i class="fa-solid fa-code text-indigo-400"></i><span>API Documentation</span></h3>
+        <button onclick="closeDocsModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="space-y-4 text-sm text-slate-300">
+        <p>Integrate DonJaySocial directly into your custom applications or bots using our standard REST API endpoint.</p>
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs text-indigo-400">
+          POST /api/v2<br>
+          Content-Type: application/json
+        </div>
+        <h4 class="font-bold text-white mt-4">Parameters:</h4>
+        <ul class="list-disc pl-5 space-y-1 text-xs text-slate-400">
+          <li><code class="text-indigo-400">key</code>: Your private API Key</li>
+          <li><code class="text-indigo-400">action</code>: add</li>
+          <li><code class="text-indigo-400">service</code>: Service ID code</li>
+          <li><code class="text-indigo-400">link</code>: Target URL</li>
+          <li><code class="text-indigo-400">quantity</code>: Desired amount</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Header Bar -->
+  <header class="md:hidden flex items-center justify-between bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-40">
+    <div class="flex items-center space-x-2">
+      <div class="bg-indigo-600 text-white p-2 rounded-xl"><i class="fa-solid fa-bolt"></i></div>
+      <span class="font-bold text-lg tracking-wide">DonJay<span class="text-indigo-400">Social</span></span>
+    </div>
+    <button id="mobile-menu-btn" class="text-slate-300 hover:text-white focus:outline-none text-xl">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </header>
+
+  <div class="flex flex-1 relative">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="absolute md:relative inset-y-0 left-0 z-30 w-64 bg-slate-900 border-r border-slate-800 flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0">
+      <div class="p-6 hidden md:flex items-center space-x-3 border-b border-slate-800/60">
+        <div class="bg-gradient-to-tr from-indigo-600 to-violet-500 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-500/30">
+          <i class="fa-solid fa-bolt text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight tracking-wide">DonJay<span class="text-indigo-400">Social</span></h1>
+          <div class="flex items-center space-x-1.5 mt-0.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">System Online</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="flex-1 p-4 space-y-2">
+        <a href="#" onclick="switchTab('new-order')" id="nav-new-order" class="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">
+          <i class="fa-solid fa-cart-shopping w-5"></i>
+          <span>New Order</span>
+        </a>
+        <a href="#" onclick="switchTab('orders-history')" id="nav-orders-history" class="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition">
+          <i class="fa-solid fa-clock-rotate-left w-5"></i>
+          <span>Orders History</span>
+        </a>
+        <a href="#" onclick="switchTab('add-funds')" id="nav-add-funds" class="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition">
+          <i class="fa-solid fa-wallet w-5"></i>
+          <span>Add Funds</span>
+        </a>
+        <a href="#" onclick="switchTab('admin-panel')" id="nav-admin-panel" class="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition hidden">
+          <i class="fa-solid fa-shield-halved w-5 text-rose-400"></i>
+          <span>Admin Panel</span>
+        </a>
+        <div class="pt-4 pb-2">
+          <p class="px-4 text-[10px] uppercase tracking-wider font-bold text-slate-500">Developer & Help</p>
+        </div>
+        <a href="#" onclick="openDocsModal()" class="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition">
+          <i class="fa-solid fa-code w-5"></i>
+          <span>API Docs</span>
+        </a>
+        <a href="https://wa.me/qr/6H2XEA5K5ELMB1" target="_blank" class="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:text-emerald-400 hover:bg-slate-800/60 transition">
+          <i class="fa-brands fa-whatsapp w-5 text-emerald-400 text-lg"></i>
+          <span>WhatsApp Support</span>
+        </a>
+      </nav>
+
+      <div class="p-4 border-t border-slate-800/60">
+        <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+          <div class="flex items-center space-x-2 cursor-pointer" onclick="openSettingsModal()" title="Account Settings">
+            <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm">
+              <span id="user-initial">D</span>
+            </div>
+            <div class="overflow-hidden">
+              <p id="sidebar-username" class="text-xs font-semibold truncate">Loading...</p>
+              <p id="sidebar-userid" class="text-[10px] text-slate-500 truncate">Settings</p>
+            </div>
+          </div>
+          <button onclick="logout()" class="text-slate-400 hover:text-rose-400 transition" title="Log out">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+      
+      <!-- Top Welcome Banner & Wallet Card -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/40 border border-slate-800/80 rounded-2xl p-6 mb-8 shadow-xl gap-4">
+        <div>
+          <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">Welcome back, <span id="welcome-name" class="text-indigo-400">User</span>! 👋</h2>
+          <p class="text-sm text-slate-400 mt-1">Boost your social media presence instantly and efficiently.</p>
+        </div>
+        <div class="flex items-center justify-between md:justify-end bg-slate-950/80 border border-slate-800 px-5 py-3.5 rounded-xl shadow-inner gap-6">
+          <div>
+            <span class="block text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Wallet Balance</span>
+            <span id="wallet-balance" class="text-2xl font-black text-emerald-400">₦0.00</span>
+          </div>
+          <button onclick="switchTab('add-funds')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2.5 rounded-xl transition shadow-md shadow-indigo-600/30 flex items-center space-x-2 text-sm">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Top Up</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Statistics Summary Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+        <div class="bg-slate-900/80 border border-slate-800/80 p-5 rounded-2xl shadow-lg flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-box-archive"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400 font-medium">Total Orders Placed</p>
+            <h3 id="stat-total-orders" class="text-2xl font-bold text-white mt-0.5">0</h3>
+          </div>
+        </div>
+        <div class="bg-slate-900/80 border border-slate-800/80 p-5 rounded-2xl shadow-lg flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-violet-500/10 text-violet-400 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-money-bill-transfer"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400 font-medium">Total Spent</p>
+            <h3 id="stat-total-spent" class="text-2xl font-bold text-white mt-0.5">₦0.00</h3>
+          </div>
+        </div>
+        <div class="bg-slate-900/80 border border-slate-800/80 p-5 rounded-2xl shadow-lg flex items-center space-x-4 sm:col-span-2 lg:col-span-1">
+          <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-fire"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400 font-medium">Active Services</p>
+            <h3 id="stat-active-services" class="text-2xl font-bold text-white mt-0.5">0</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 1: New Order -->
+      <div id="tab-new-order" class="tab-content">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+          <div class="flex items-center space-x-3 mb-6 pb-4 border-b border-slate-800/80">
+            <div class="bg-indigo-500/20 text-indigo-400 p-2.5 rounded-xl"><i class="fa-solid fa-rocket"></i></div>
+            <h3 class="text-xl font-bold text-white">Place a New Order</h3>
+          </div>
+
+          <form id="order-form" onsubmit="handlePlaceOrder(event)" class="space-y-6">
+            <div>
+              <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Filter Services</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input type="text" id="service-filter" oninput="filterServicesDropdown()" placeholder="Type to filter services..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Service Category & Type</label>
+              <select id="service-select" onchange="updateEstimatedCost()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                <option value="">Loading synced services...</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Target Link</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-link"></i></span>
+                <input type="url" id="order-link" placeholder="https://instagram.com/p/..." required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="block text-xs uppercase tracking-wider font-bold text-slate-400">Quantity</label>
+                <div class="flex space-x-2">
+                  <button type="button" onclick="addQuantity(100)" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-slate-300 transition">+100</button>
+                  <button type="button" onclick="addQuantity(500)" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-slate-300 transition">+500</button>
+                  <button type="button" onclick="addQuantity(1000)" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-slate-300 transition">+1000</button>
+                </div>
+              </div>
+              <input type="number" id="order-quantity" value="1000" min="1" oninput="updateEstimatedCost()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+            </div>
+
+            <div class="bg-slate-950 border border-slate-800/80 p-4 rounded-xl flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-400">Estimated Total Cost:</span>
+              <span id="estimated-cost" class="text-xl font-black text-indigo-400">₦0.00</span>
+            </div>
+
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-paper-plane"></i>
+              <span>Submit Order</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- TAB 2: Orders History -->
+      <div id="tab-orders-history" class="tab-content hidden">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+          <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-800/80">
+            <div class="flex items-center space-x-3">
+              <div class="bg-violet-500/20 text-violet-400 p-2.5 rounded-xl"><i class="fa-solid fa-clock-rotate-left"></i></div>
+              <h3 class="text-xl font-bold text-white">Orders History</h3>
+            </div>
+            <button onclick="loadOrdersHistory()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-xl transition text-slate-300 flex items-center space-x-1.5">
+              <i class="fa-solid fa-rotate"></i>
+              <span>Refresh</span>
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-xs font-bold text-slate-400 uppercase">
+                  <th class="py-3 px-4">Order ID</th>
+                  <th class="py-3 px-4">Service</th>
+                  <th class="py-3 px-4">Link</th>
+                  <th class="py-3 px-4">Qty</th>
+                  <th class="py-3 px-4">Cost</th>
+                  <th class="py-3 px-4">Status</th>
+                </tr>
+              </thead>
+              <tbody id="orders-table-body" class="divide-y divide-slate-800/60 text-sm">
+                <tr>
+                  <td colspan="6" class="py-6 text-center text-slate-500">Loading orders history...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: Add Funds -->
+      <div id="tab-add-funds" class="tab-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <!-- Paystack Gateway -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+            <div class="flex items-center space-x-3 mb-6 pb-4 border-b border-slate-800/80">
+              <div class="bg-emerald-500/20 text-emerald-400 p-2.5 rounded-xl"><i class="fa-solid fa-credit-card"></i></div>
+              <h3 class="text-xl font-bold text-white">Paystack (Instant)</h3>
+            </div>
+            <form onsubmit="handlePaystackDeposit(event)" class="space-y-6">
+              <div>
+                <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Amount (NGN)</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 font-bold">₦</span>
+                  <input type="number" id="deposit-amount" placeholder="1000" min="100" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition">
+                </div>
+              </div>
+              <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-emerald-600/30">Pay with Paystack</button>
+            </form>
+          </div>
+
+          <!-- Manual / Crypto / OPay Gateway -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+            <div class="flex items-center space-x-3 mb-6 pb-4 border-b border-slate-800/80">
+              <div class="bg-indigo-500/20 text-indigo-400 p-2.5 rounded-xl"><i class="fa-solid fa-wallet"></i></div>
+              <h3 class="text-xl font-bold text-white">Crypto / OPay / PalmPay</h3>
+            </div>
+            <form onsubmit="handleManualDeposit(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">Select Payment Method</label>
+                <select id="manual-method" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none">
+                  <option value="OPay">OPay Transfer</option>
+                  <option value="PalmPay">PalmPay Transfer</option>
+                  <option value="USDT/Crypto">USDT (TRC20)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">Amount Paid (NGN / USD)</label>
+                <input type="text" id="manual-amount" placeholder="e.g. 5000" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">Transaction Ref / Hash</label>
+                <input type="text" id="manual-ref" placeholder="Paste proof or reference code" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none">
+              </div>
+              <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition shadow-md">Submit Manual Proof</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: Admin Panel -->
+      <div id="tab-admin-panel" class="tab-content hidden">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+          <div class="flex items-center space-x-3 mb-6 pb-4 border-b border-slate-800/80">
+            <div class="bg-rose-500/20 text-rose-400 p-2.5 rounded-xl"><i class="fa-solid fa-shield-halved"></i></div>
+            <h3 class="text-xl font-bold text-white">Admin Dashboard Controls</h3>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+              <h4 class="font-bold text-white mb-2">System Users</h4>
+              <p id="admin-user-count" class="text-2xl font-black text-indigo-400">0</p>
+            </div>
+            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+              <h4 class="font-bold text-white mb-2">Pending Manual Payments</h4>
+              <p id="admin-pending-count" class="text-2xl font-black text-amber-400">0</p>
+            </div>
+            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+              <h4 class="font-bold text-white mb-2">Total Platform Revenue</h4>
+              <p id="admin-revenue" class="text-2xl font-black text-emerald-400">₦0.00</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Global Notification Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 border border-slate-700 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toast-message" class="text-sm font-medium">Notification message</span>
+  </div>
+
+  <script>
+    let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+    let rawServicesList = [];
+    let allOrdersList = [];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!currentUser) {
+        document.getElementById('auth-modal').classList.remove('hidden');
+      } else {
+        initApp();
+      }
+    });
+
+    async function initApp() {
+      await fetchUserData();
+      loadServices();
+      loadOrdersHistory();
+      checkAdminAccess();
+    }
+
+    async function fetchUserData() {
+      if (!currentUser || !currentUser.customId) return;
+      try {
+        const res = await fetch(`/api/user/${currentUser.customId}`);
+        const data = await res.json();
+        if (data.success) {
+          currentUser = data.user;
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        }
+      } catch (err) {
+        console.error('Failed to refresh user profile:', err);
+      }
+      renderUserUI();
+    }
+
+    async function checkAdminAccess() {
+      const adminNav = document.getElementById('nav-admin-panel');
+      if (currentUser && currentUser.email === 'admin@donjaysocial.com') {
+        adminNav.classList.remove('hidden');
+        try {
+          const res = await fetch(`/api/admin/metrics/${currentUser.customId}`);
+          const data = await res.json();
+          if (data.success) {
+            document.getElementById('admin-user-count').innerText = data.metrics.userCount;
+            document.getElementById('admin-pending-count').innerText = data.metrics.pendingDepositsCount;
+            document.getElementById('admin-revenue').innerText = `₦${data.metrics.totalRevenue.toFixed(2)}`;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        adminNav.classList.add('hidden');
+      }
+    }
+
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const sidebar = document.getElementById('sidebar');
+    mobileMenuBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('-translate-x-full');
+    });
+
+    function showToast(message, isError = false) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastMsg.innerText = message;
+      toastIcon.className = isError ? 'fa-solid fa-circle-exclamation text-rose-400' : 'fa-solid fa-circle-check text-emerald-400';
+      
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3500);
+    }
+
+    function toggleAuthMode(mode) {
+      const loginForm = document.getElementById('login-form');
+      const signupForm = document.getElementById('signup-form');
+      const title = document.getElementById('auth-modal-title');
+      if (mode === 'signup') {
+        loginForm.classList.add('hidden');
+        signupForm.classList.remove('hidden');
+        title.innerText = 'Create Account';
+      } else {
+        signupForm.classList.add('hidden');
+        loginForm.classList.remove('hidden');
+        title.innerText = 'Welcome Back';
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (data.success) {
+          currentUser = data.user;
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+          document.getElementById('auth-modal').classList.add('hidden');
+          showToast('Successfully signed in!');
+          initApp();
+        } else {
+          showToast(data.error || 'Login failed', true);
+        }
+      } catch (err) {
+        showToast('Network error during login', true);
+      }
+    }
+
+    async function handleSignup(e) {
+      e.preventDefault();
+      const name = document.getElementById('signup-name').value;
+      const email = document.getElementById('signup-email').value;
+      const whatsapp = document.getElementById('signup-whatsapp').value;
+      const password = document.getElementById('signup-password').value;
+      try {
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, whatsapp, password })
+        });
+        const data = await res.json();
+        if (data.success) {
+          currentUser = data.user;
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+          document.getElementById('auth-modal').classList.add('hidden');
+          showToast('Account created successfully!');
+          initApp();
+        } else {
+          showToast(data.error || 'Signup failed', true);
+        }
+      } catch (err) {
+        showToast('Network error during signup', true);
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('currentUser');
+      currentUser = null;
+      document.getElementById('auth-modal').classList.remove('hidden');
+      showToast('Logged out successfully');
+    }
+
+    function renderUserUI() {
+      if (!currentUser) return;
+      document.getElementById('welcome-name').innerText = currentUser.name.split(' ')[0];
+      document.getElementById('sidebar-username').innerText = currentUser.name;
+      document.getElementById('sidebar-userid').innerText = `ID: ${currentUser.customId}`;
+      document.getElementById('user-initial').innerText = currentUser.name.charAt(0).toUpperCase();
+      document.getElementById('wallet-balance').innerText = `₦${(currentUser.balance || 0).toFixed(2)}`;
+      document.getElementById('stat-total-orders').innerText = currentUser.totalOrders || 0;
+      document.getElementById('stat-total-spent').innerText = `₦${(currentUser.totalSpent || 0).toFixed(2)}`;
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      
+      const navLinks = ['new-order', 'orders-history', 'add-funds', 'admin-panel'];
+      navLinks.forEach(id => {
+        const btn = document.getElementById(`nav-${id}`);
+        if (!btn) return;
+        if (id === tabId) {
+          btn.className = "flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition bg-indigo-600 text-white shadow-lg shadow-indigo-600/20";
+        } else {
+          btn.className = "flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition";
+        }
+      });
+      if (window.innerWidth < 768) {
+        document.getElementById('sidebar').classList.add('-translate-x-full');
+      }
+    }
+
+    async function loadServices() {
+      try {
+        const res = await fetch('/api/services');
+        const data = await res.json();
+        if (data.success && data.services) {
+          rawServicesList = data.services;
+          document.getElementById('stat-active-services').innerText = rawServicesList.length;
+          populateServicesDropdown(rawServicesList);
+        }
+      } catch (err) {
+        console.error('Failed to load services:', err);
+      }
+    }
+
+    function populateServicesDropdown(services) {
+      const select = document.getElementById('service-select');
+      select.innerHTML = '';
+      services.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.service;
+        opt.dataset.rate = s.rate;
+        opt.textContent = `[${s.service}] ${s.name} - ₦${s.rate} per 1000`;
+        select.appendChild(opt);
+      });
+      updateEstimatedCost();
+    }
+
+    function filterServicesDropdown() {
+      const query = document.getElementById('service-filter').value.toLowerCase();
+      const filtered = rawServicesList.filter(s => s.name.toLowerCase().includes(query) || s.service.toString().includes(query));
+      populateServicesDropdown(filtered);
+    }
+
+    function updateEstimatedCost() {
+      const select = document.getElementById('service-select');
+      const qtyInput = document.getElementById('order-quantity');
+      const costEl = document.getElementById('estimated-cost');
+      if (!select.selectedOptions.length) return;
+      const rate = parseFloat(select.selectedOptions[0].dataset.rate || 0);
+      const qty = parseInt(qtyInput.value || 0);
+      const total = (rate / 1000) * qty;
+      costEl.innerText = `₦${total.toFixed(2)}`;
+    }
+
+    function addQuantity(amount) {
+      const qtyInput = document.getElementById('order-quantity');
+      qtyInput.value = parseInt(qtyInput.value || 0) + amount;
+      updateEstimatedCost();
+    }
+
+    async function handlePlaceOrder(e) {
+      e.preventDefault();
+      const service = document.getElementById('service-select').value;
+      const link = document.getElementById('order-link').value;
+      const quantity = document.getElementById('order-quantity').value;
+      try {
+        const res = await fetch('/api/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customId: currentUser.customId, service, link, quantity })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Order placed successfully! ID: ${data.orderId}`);
+          document.getElementById('order-link').value = '';
+          fetchUserData();
+          loadOrdersHistory();
+          switchTab('orders-history');
+        } else {
+          showToast(data.error || 'Failed to place order', true);
+        }
+      } catch (err) {
+        showToast('Network error placing order', true);
+      }
+    }
+
+    async function loadOrdersHistory() {
+      if (!currentUser) return;
+      try {
+        const res = await fetch(`/api/orders/${currentUser.customId}`);
+        const data = await res.json();
+        const tbody = document.getElementById('orders-table-body');
+        if (data.success && data.orders.length > 0) {
+          tbody.innerHTML = '';
+          data.orders.forEach(o => {
+            tbody.innerHTML += `
+              <tr class="border-b border-slate-800/40 hover:bg-slate-800/20">
+                <td class="py-3 px-4 font-mono text-xs text-indigo-400">${o.orderId}</td>
+                <td class="py-3 px-4 truncate max-w-xs">${o.service}</td>
+                <td class="py-3 px-4 truncate max-w-xs text-slate-400"><a href="${o.link}" target="_blank" class="hover:underline">${o.link}</a></td>
+                <td class="py-3 px-4">${o.quantity}</td>
+                <td class="py-3 px-4 text-emerald-400">₦${o.charge.toFixed(2)}</td>
+                <td class="py-3 px-4"><span class="px-2 py-1 rounded text-xs font-semibold bg-blue-500/10 text-blue-400">${o.status}</span></td>
+              </tr>
+            `;
+          });
+        } else {
+          tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No orders found.</td></tr>`;
+        }
+      } catch (err) {
+        console.error('Failed to load orders history:', err);
+      }
+    }
+
+    async function handlePaystackDeposit(e) {
+      e.preventDefault();
+      const amount = parseFloat(document.getElementById('deposit-amount').value);
+      if (!amount || amount < 100) {
+        showToast('Minimum deposit amount is ₦100', true);
+        return;
+      }
+      try {
+        const res = await fetch('/api/deposit/paystack/init', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customId: currentUser.customId, amount })
+        });
+        const data = await res.json();
+        if (data.success) {
+          let handler = PaystackPop.setup({
+            key: data.publicKey,
+            email: currentUser.email,
+            amount: amount * 100,
+            currency: 'NGN',
+            ref: data.reference,
+            callback: function(response) {
+              verifyPaystackPayment(response.reference);
+            },
+            onClose: function() {
+              showToast('Transaction was closed.', true);
+            }
+          });
+          handler.openIframe();
+        } else {
+          showToast(data.error || 'Initialization failed', true);
+        }
+      } catch (err) {
+        showToast('Network error starting Paystack', true);
+      }
+    }
+
+    async function verifyPaystackPayment(reference) {
+      try {
+        const res = await fetch('/api/deposit/paystack/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customId: currentUser.customId, reference })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Wallet funded successfully!');
+          fetchUserData();
+          switchTab('new-order');
+        } else {
+          showToast(data.error || 'Payment verification failed', true);
+        }
+      } catch (err) {
+        showToast('Verification network error', true);
+      }
+    }
+
+    async function handleManualDeposit(e) {
+      e.preventDefault();
+      const method = document.getElementById('manual-method').value;
+      const amount = document.getElementById('manual-amount').value;
+      const reference = document.getElementById('manual-ref').value;
+      try {
+        const res = await fetch('/api/deposit/manual', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customId: currentUser.customId, method, amount, reference })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Payment proof submitted for admin review!');
+          document.getElementById('manual-amount').value = '';
+          document.getElementById('manual-ref').value = '';
+        } else {
+          showToast(data.error || 'Submission failed', true);
+        }
+      } catch (err) {
+        showToast('Network error submitting proof', true);
+      }
+    }
+
+    function openSettingsModal() {
+      if (!currentUser) return;
+      document.getElementById('settings-apikey').value = currentUser.apiKey || 'No API Key';
+      document.getElementById('settings-name').value = currentUser.name || '';
+      document.getElementById('settings-whatsapp').value = currentUser.whatsapp || '';
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    function copyApiKey() {
+      const keyInput = document.getElementById('settings-apikey');
+      keyInput.select();
+      document.execCommand('copy');
+      showToast('API Key copied to clipboard!');
+    }
+
+    async function handleUpdateProfile(e) {
+      e.preventDefault();
+      const name = document.getElementById('settings-name').value;
+      const whatsapp = document.getElementById('settings-whatsapp').value;
+      try {
+        const res = await fetch('/api/user/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customId: currentUser.customId, name, whatsapp })
+        });
+        const data = await res.json();
+        if (data.success) {
+          currentUser = data.user;
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+          renderUserUI();
+          closeSettingsModal();
+          showToast('Profile updated successfully!');
+        } else {
+          showToast(data.error || 'Update failed', true);
+        }
+      } catch (err) {
+        showToast('Network error updating profile', true);
+      }
+    }
+
+    function openDocsModal() {
+      document.getElementById('docs-modal').classList.remove('hidden');
+    }
+
+    function closeDocsModal() {
+      document.getElementById('docs-modal').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
