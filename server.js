@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   balance: { type: Number, default: 0.00 },
   apiKey: { type: String, required: true, unique: true },
-  isAdmin: { type: Boolean, default: false }, // Added to control panel access
+  isAdmin: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -53,24 +53,27 @@ const User = mongoose.model('User', userSchema);
 const Order = mongoose.model('Order', orderSchema);
 const Deposit = mongoose.model('Deposit', depositSchema);
 
-// Seed default master user on boot (if not already existing)
+// Seed or update default master user on boot safely using unique email
 async function seedDefaultUser() {
   try {
-    const existing = await User.findOne({ email: 'admin@donjaysocial.com' });
-    if (!existing) {
-      const hashedPassword = await bcrypt.hash('password123', 10);
-      await User.create({ 
-        customId: 'user_1', 
+    const hashedPassword = await bcrypt.hash('password123', 10);
+    
+    await User.findOneAndUpdate(
+      { email: 'isahy061@gmail.com' },
+      { 
+        customId: 'user_1',
         name: 'Isah', 
-        email: 'admin@donjaysocial.com',
+        email: 'isahy061@gmail.com',
         whatsapp: '+2348000000000',
         password: hashedPassword,
         balance: 50.00,
         apiKey: 'djs_key_masteradmin123',
-        isAdmin: true // Ensure default master account is admin
-      });
-      console.log('===> Default master user seeded successfully.');
-    }
+        isAdmin: true 
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    
+    console.log('===> Default master user seeded/verified successfully.');
   } catch (err) {
     console.error('Seeding error:', err.message);
   }
@@ -108,7 +111,8 @@ app.post('/api/signup', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Please fill in all required fields' });
     }
 
-    const existingUser = await User.findOne({ email });
+    const normalizedEmail = email.toLowerCase().trim();
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({ success: false, error: 'Email already registered' });
     }
@@ -117,15 +121,17 @@ app.post('/api/signup', async (req, res) => {
     const customId = `user_${Date.now()}`;
     const apiKey = `djs_key_${Math.random().toString(36).substring(2, 11)}${Math.random().toString(36).substring(2, 11)}`;
 
+    const isMasterAdmin = (normalizedEmail === 'isahy061@gmail.com');
+
     const newUser = await User.create({
       customId,
       name,
-      email,
+      email: normalizedEmail,
       whatsapp: whatsapp || '',
       password: hashedPassword,
       balance: 0.00,
       apiKey,
-      isAdmin: false // Regular signups are never admins
+      isAdmin: isMasterAdmin
     });
 
     res.json({
@@ -167,6 +173,11 @@ app.post('/api/login', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid email or password' });
     }
 
+    if (user.email === 'isahy061@gmail.com' && !user.isAdmin) {
+      user.isAdmin = true;
+      await user.save();
+    }
+
     res.json({
       success: true,
       message: 'Logged in successfully!',
@@ -177,7 +188,7 @@ app.post('/api/login', async (req, res) => {
         whatsapp: user.whatsapp,
         balance: user.balance,
         apiKey: user.apiKey,
-        isAdmin: user.isAdmin // Passed to client to conditionally render admin panel
+        isAdmin: user.isAdmin
       }
     });
 
@@ -201,7 +212,7 @@ app.get('/api/user/:id', async (req, res) => {
         whatsapp: user.whatsapp,
         balance: user.balance,
         apiKey: user.apiKey,
-        isAdmin: user.isAdmin
+        isAdmin: user.email === 'isahy061@gmail.com' ? true : user.isAdmin
       } 
     });
   } catch (err) {
@@ -229,7 +240,7 @@ app.put('/api/user/:id', async (req, res) => {
         whatsapp: user.whatsapp,
         balance: user.balance,
         apiKey: user.apiKey,
-        isAdmin: user.isAdmin
+        isAdmin: user.email === 'isahy061@gmail.com' ? true : user.isAdmin
       } 
     });
   } catch (err) {
@@ -237,17 +248,16 @@ app.put('/api/user/:id', async (req, res) => {
   }
 });
 
-// 3b. Admin metrics and security check route
+// 3b. Strictly Secured Admin Metrics Route
 app.get('/api/admin/metrics/:id', async (req, res) => {
   try {
     const user = await User.findOne({ customId: req.params.id });
-    // Strictly verify if the user exists and has admin privileges
-    if (!user || !user.isAdmin) {
-      return res.status(403).json({ success: false, error: 'Unauthorized access. Admins only.' });
+    
+    if (!user || user.email !== 'isahy061@gmail.com' || !user.isAdmin) {
+      return res.status(403).json({ success: false, error: 'Unauthorized access. Private admin panel.' });
     }
 
     const userCount = await User.countDocuments();
-    const pendingDepositsCount = await Deposit.countDocuments({ status: 'pending' });
     const allDeposits = await Deposit.find({ status: 'success' });
     const totalRevenue = allDeposits.reduce((acc, curr) => acc + curr.amount, 0);
 
@@ -255,7 +265,7 @@ app.get('/api/admin/metrics/:id', async (req, res) => {
       success: true, 
       metrics: {
         userCount,
-        pendingDepositsCount,
+        pendingDepositsCount: 0,
         totalRevenue
       }
     });
@@ -270,11 +280,15 @@ app.get('/api/services', async (req, res) => {
     let rawServices = fallbackServices;
 
     if (process.env.PROVIDER_API_URL && process.env.PROVIDER_API_KEY && process.env.PROVIDER_API_KEY !== 'your_actual_provider_api_key_here') {
-      const response = await axios.post(process.env.PROVIDER_API_URL, new URLSearchParams({
-        key: process.env.PROVIDER_API_KEY,
-        action: 'services'
-      }));
-      if (Array.isArray(response.data)) rawServices = response.data;
+      try {
+        const response = await axios.post(process.env.PROVIDER_API_URL, new URLSearchParams({
+          key: process.env.PROVIDER_API_KEY,
+          action: 'services'
+        }));
+        if (Array.isArray(response.data)) rawServices = response.data;
+      } catch (providerErr) {
+        console.warn('Warning: Failed to fetch from external provider, falling back to local services.', providerErr.message);
+      }
     }
 
     const servicesWithMarkup = rawServices.map((svc) => {
@@ -311,11 +325,13 @@ app.post('/api/orders', async (req, res) => {
 
     let rawServices = fallbackServices;
     if (process.env.PROVIDER_API_URL && process.env.PROVIDER_API_KEY && process.env.PROVIDER_API_KEY !== 'your_actual_provider_api_key_here') {
-      const response = await axios.post(process.env.PROVIDER_API_URL, new URLSearchParams({
-        key: process.env.PROVIDER_API_KEY,
-        action: 'services'
-      }));
-      if (Array.isArray(response.data)) rawServices = response.data;
+      try {
+        const response = await axios.post(process.env.PROVIDER_API_URL, new URLSearchParams({
+          key: process.env.PROVIDER_API_KEY,
+          action: 'services'
+        }));
+        if (Array.isArray(response.data)) rawServices = response.data;
+      } catch (e) {}
     }
 
     const selectedService = rawServices.find(s => (s.service || s.id) == serviceId);
@@ -337,18 +353,22 @@ app.post('/api/orders', async (req, res) => {
     let providerOrderId = `MOCK-${Date.now()}`;
 
     if (process.env.PROVIDER_API_URL && process.env.PROVIDER_API_KEY && process.env.PROVIDER_API_KEY !== 'your_actual_provider_api_key_here') {
-      const providerRes = await axios.post(process.env.PROVIDER_API_URL, new URLSearchParams({
-        key: process.env.PROVIDER_API_KEY,
-        action: 'add',
-        service: serviceId,
-        link,
-        quantity
-      }));
+      try {
+        const providerRes = await axios.post(process.env.PROVIDER_API_URL, new URLSearchParams({
+          key: process.env.PROVIDER_API_KEY,
+          action: 'add',
+          service: serviceId,
+          link,
+          quantity
+        }));
 
-      if (providerRes.data?.order) {
-        providerOrderId = providerRes.data.order;
-      } else if (providerRes.data?.error) {
-        return res.status(400).json({ success: false, error: `Provider Error: ${providerRes.data.error}` });
+        if (providerRes.data?.order) {
+          providerOrderId = providerRes.data.order;
+        } else if (providerRes.data?.error) {
+          return res.status(400).json({ success: false, error: `Provider Error: ${providerRes.data.error}` });
+        }
+      } catch (apiErr) {
+        return res.status(502).json({ success: false, error: 'Failed to communicate with SMM upstream provider' });
       }
     }
 
@@ -379,7 +399,7 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// 6. Fetch orders from DB (Supports filtering by userId query param)
+// 6. Fetch orders from DB
 app.get('/api/orders', async (req, res) => {
   try {
     const { userId } = req.query;
@@ -391,7 +411,7 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-// 7. Verify Paystack Payment and Credit Wallet (Direct NGN)
+// 7. Verify Paystack Payment and Credit Wallet
 app.post('/api/payment/verify', async (req, res) => {
   const { reference, userId } = req.body;
 
@@ -419,12 +439,10 @@ app.post('/api/payment/verify', async (req, res) => {
       const amountPaidNGN = transactionData.data.amount / 100; 
 
       const user = await User.findOne({ customId: userId });
-
       if (!user) {
         return res.status(404).json({ success: false, error: 'User not found for crediting wallet' });
       }
 
-      // Check if reference was already processed to prevent duplicate crediting
       const existingDeposit = await Deposit.findOne({ reference });
       if (existingDeposit) {
         return res.status(400).json({ success: false, error: 'Transaction reference already used' });
@@ -433,7 +451,6 @@ app.post('/api/payment/verify', async (req, res) => {
       user.balance = parseFloat((user.balance + amountPaidNGN).toFixed(2));
       await user.save();
 
-      // Record deposit history
       await Deposit.create({
         depositId: `DEP-${Date.now()}`,
         userId,
@@ -455,33 +472,6 @@ app.post('/api/payment/verify', async (req, res) => {
   } catch (err) {
     console.error('Paystack Verification Error:', err.response?.data || err.message);
     return res.status(500).json({ success: false, error: 'Server error during payment verification' });
-  }
-});
-
-// 7b. Submit manual payment proof
-app.post('/api/payments/manual', async (req, res) => {
-  try {
-    const { userId, method, amount, reference } = req.body;
-    if (!userId || !method || !amount || !reference) {
-      return res.status(400).json({ success: false, error: 'All manual deposit fields are required' });
-    }
-
-    const existingDeposit = await Deposit.findOne({ reference });
-    if (existingDeposit) {
-      return res.status(400).json({ success: false, error: 'Reference or hash already submitted' });
-    }
-
-    await Deposit.create({
-      depositId: `DEP-MANUAL-${Date.now()}`,
-      userId,
-      amount: parseFloat(amount) || 0,
-      reference: `${method} - ${reference}`,
-      status: 'pending'
-    });
-
-    res.json({ success: true, message: 'Manual payment proof submitted successfully!' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
   }
 });
 

@@ -375,12 +375,12 @@
 
       <!-- TAB 3: Add Funds -->
       <div id="tab-add-funds" class="tab-content hidden">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div class="max-w-xl mx-auto">
           <!-- Paystack Gateway -->
           <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
             <div class="flex items-center space-x-3 mb-6 pb-4 border-b border-slate-800/80">
               <div class="bg-emerald-500/20 text-emerald-400 p-2.5 rounded-xl"><i class="fa-solid fa-credit-card"></i></div>
-              <h3 class="text-xl font-bold text-white">Paystack (Instant)</h3>
+              <h3 class="text-xl font-bold text-white">Paystack Instant Funding</h3>
             </div>
             <form onsubmit="handlePaystackDeposit(event)" class="space-y-6">
               <div>
@@ -393,33 +393,6 @@
               <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-emerald-600/30">Pay with Paystack</button>
             </form>
           </div>
-
-          <!-- Manual / Crypto / OPay Gateway -->
-          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
-            <div class="flex items-center space-x-3 mb-6 pb-4 border-b border-slate-800/80">
-              <div class="bg-indigo-500/20 text-indigo-400 p-2.5 rounded-xl"><i class="fa-solid fa-wallet"></i></div>
-              <h3 class="text-xl font-bold text-white">Crypto / OPay / PalmPay</h3>
-            </div>
-            <form onsubmit="handleManualDeposit(event)" class="space-y-4">
-              <div>
-                <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">Select Payment Method</label>
-                <select id="manual-method" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none">
-                  <option value="OPay">OPay Transfer</option>
-                  <option value="PalmPay">PalmPay Transfer</option>
-                  <option value="USDT/Crypto">USDT (TRC20)</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">Amount Paid (NGN / USD)</label>
-                <input type="text" id="manual-amount" placeholder="e.g. 5000" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none">
-              </div>
-              <div>
-                <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">Transaction Ref / Hash</label>
-                <input type="text" id="manual-ref" placeholder="Paste proof or reference code" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none">
-              </div>
-              <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition shadow-md">Submit Manual Proof</button>
-            </form>
-          </div>
         </div>
       </div>
 
@@ -430,14 +403,10 @@
             <div class="bg-rose-500/20 text-rose-400 p-2.5 rounded-xl"><i class="fa-solid fa-shield-halved"></i></div>
             <h3 class="text-xl font-bold text-white">Admin Dashboard Controls</h3>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800">
               <h4 class="font-bold text-white mb-2">System Users</h4>
               <p id="admin-user-count" class="text-2xl font-black text-indigo-400">0</p>
-            </div>
-            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800">
-              <h4 class="font-bold text-white mb-2">Pending Manual Payments</h4>
-              <p id="admin-pending-count" class="text-2xl font-black text-amber-400">0</p>
             </div>
             <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800">
               <h4 class="font-bold text-white mb-2">Total Platform Revenue</h4>
@@ -459,7 +428,6 @@
   <script>
     let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
     let rawServicesList = [];
-    let allOrdersList = [];
 
     window.addEventListener('DOMContentLoaded', () => {
       if (!currentUser) {
@@ -493,18 +461,19 @@
 
     async function checkAdminAccess() {
       const adminNav = document.getElementById('nav-admin-panel');
-      if (currentUser && currentUser.email === 'admin@donjaysocial.com') {
+      if (currentUser && currentUser.email === 'isahy061@gmail.com') {
         adminNav.classList.remove('hidden');
         try {
           const res = await fetch(`/api/admin/metrics/${currentUser.customId}`);
           const data = await res.json();
           if (data.success) {
             document.getElementById('admin-user-count').innerText = data.metrics.userCount;
-            document.getElementById('admin-pending-count').innerText = data.metrics.pendingDepositsCount;
             document.getElementById('admin-revenue').innerText = `₦${data.metrics.totalRevenue.toFixed(2)}`;
+          } else {
+            adminNav.classList.add('hidden');
           }
         } catch (e) {
-          console.error(e);
+          adminNav.classList.add('hidden');
         }
       } else {
         adminNav.classList.add('hidden');
@@ -551,7 +520,7 @@
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
       try {
-        const res = await fetch('/api/auth/login', {
+        const res = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password })
@@ -578,7 +547,7 @@
       const whatsapp = document.getElementById('signup-whatsapp').value;
       const password = document.getElementById('signup-password').value;
       try {
-        const res = await fetch('/api/auth/signup', {
+        const res = await fetch('/api/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, email, whatsapp, password })
@@ -612,8 +581,6 @@
       document.getElementById('sidebar-userid').innerText = `ID: ${currentUser.customId}`;
       document.getElementById('user-initial').innerText = currentUser.name.charAt(0).toUpperCase();
       document.getElementById('wallet-balance').innerText = `₦${(currentUser.balance || 0).toFixed(2)}`;
-      document.getElementById('stat-total-orders').innerText = currentUser.totalOrders || 0;
-      document.getElementById('stat-total-spent').innerText = `₦${(currentUser.totalSpent || 0).toFixed(2)}`;
     }
 
     function switchTab(tabId) {
@@ -639,8 +606,8 @@
       try {
         const res = await fetch('/api/services');
         const data = await res.json();
-        if (data.success && data.services) {
-          rawServicesList = data.services;
+        if (Array.isArray(data)) {
+          rawServicesList = data;
           document.getElementById('stat-active-services').innerText = rawServicesList.length;
           populateServicesDropdown(rawServicesList);
         }
@@ -687,18 +654,18 @@
 
     async function handlePlaceOrder(e) {
       e.preventDefault();
-      const service = document.getElementById('service-select').value;
+      const serviceId = document.getElementById('service-select').value;
       const link = document.getElementById('order-link').value;
       const quantity = document.getElementById('order-quantity').value;
       try {
-        const res = await fetch('/api/order', {
+        const res = await fetch('/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ customId: currentUser.customId, service, link, quantity })
+          body: JSON.stringify({ userId: currentUser.customId, serviceId, link, quantity })
         });
         const data = await res.json();
         if (data.success) {
-          showToast(`Order placed successfully! ID: ${data.orderId}`);
+          showToast(`Order placed successfully! ID: ${data.order.orderId}`);
           document.getElementById('order-link').value = '';
           fetchUserData();
           loadOrdersHistory();
@@ -714,7 +681,7 @@
     async function loadOrdersHistory() {
       if (!currentUser) return;
       try {
-        const res = await fetch(`/api/orders/${currentUser.customId}`);
+        const res = await fetch(`/api/orders?userId=${currentUser.customId}`);
         const data = await res.json();
         const tbody = document.getElementById('orders-table-body');
         if (data.success && data.orders.length > 0) {
@@ -723,10 +690,10 @@
             tbody.innerHTML += `
               <tr class="border-b border-slate-800/40 hover:bg-slate-800/20">
                 <td class="py-3 px-4 font-mono text-xs text-indigo-400">${o.orderId}</td>
-                <td class="py-3 px-4 truncate max-w-xs">${o.service}</td>
+                <td class="py-3 px-4 truncate max-w-xs">Service #${o.serviceId}</td>
                 <td class="py-3 px-4 truncate max-w-xs text-slate-400"><a href="${o.link}" target="_blank" class="hover:underline">${o.link}</a></td>
                 <td class="py-3 px-4">${o.quantity}</td>
-                <td class="py-3 px-4 text-emerald-400">₦${o.charge.toFixed(2)}</td>
+                <td class="py-3 px-4 text-emerald-400">₦${o.cost.toFixed(2)}</td>
                 <td class="py-3 px-4"><span class="px-2 py-1 rounded text-xs font-semibold bg-blue-500/10 text-blue-400">${o.status}</span></td>
               </tr>
             `;
@@ -739,53 +706,43 @@
       }
     }
 
-    async function handlePaystackDeposit(e) {
+    function handlePaystackDeposit(e) {
       e.preventDefault();
       const amount = parseFloat(document.getElementById('deposit-amount').value);
       if (!amount || amount < 100) {
         showToast('Minimum deposit amount is ₦100', true);
         return;
       }
+      
       try {
-        const res = await fetch('/api/deposit/paystack/init', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ customId: currentUser.customId, amount })
+        let handler = PaystackPop.setup({
+          key: 'pk_live_c120d0a7204cd5b3eb57185c2f964f6ab4bad155',
+          email: currentUser.email,
+          amount: amount * 100,
+          currency: 'NGN',
+          callback: function(response) {
+            verifyPaystackPayment(response.reference);
+          },
+          onClose: function() {
+            showToast('Transaction window was closed.', true);
+          }
         });
-        const data = await res.json();
-        if (data.success) {
-          let handler = PaystackPop.setup({
-            key: data.publicKey,
-            email: currentUser.email,
-            amount: amount * 100,
-            currency: 'NGN',
-            ref: data.reference,
-            callback: function(response) {
-              verifyPaystackPayment(response.reference);
-            },
-            onClose: function() {
-              showToast('Transaction was closed.', true);
-            }
-          });
-          handler.openIframe();
-        } else {
-          showToast(data.error || 'Initialization failed', true);
-        }
+        handler.openIframe();
       } catch (err) {
-        showToast('Network error starting Paystack', true);
+        showToast('Error starting Paystack popup', true);
       }
     }
 
     async function verifyPaystackPayment(reference) {
       try {
-        const res = await fetch('/api/deposit/paystack/verify', {
+        const res = await fetch('/api/payment/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ customId: currentUser.customId, reference })
+          body: JSON.stringify({ userId: currentUser.customId, reference })
         });
         const data = await res.json();
         if (data.success) {
-          showToast('Wallet funded successfully!');
+          showToast('Wallet funded successfully! Balance updated.');
           fetchUserData();
           switchTab('new-order');
         } else {
@@ -793,30 +750,6 @@
         }
       } catch (err) {
         showToast('Verification network error', true);
-      }
-    }
-
-    async function handleManualDeposit(e) {
-      e.preventDefault();
-      const method = document.getElementById('manual-method').value;
-      const amount = document.getElementById('manual-amount').value;
-      const reference = document.getElementById('manual-ref').value;
-      try {
-        const res = await fetch('/api/deposit/manual', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ customId: currentUser.customId, method, amount, reference })
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast('Payment proof submitted for admin review!');
-          document.getElementById('manual-amount').value = '';
-          document.getElementById('manual-ref').value = '';
-        } else {
-          showToast(data.error || 'Submission failed', true);
-        }
-      } catch (err) {
-        showToast('Network error submitting proof', true);
       }
     }
 
@@ -844,10 +777,10 @@
       const name = document.getElementById('settings-name').value;
       const whatsapp = document.getElementById('settings-whatsapp').value;
       try {
-        const res = await fetch('/api/user/update', {
-          method: 'POST',
+        const res = await fetch(`/api/user/${currentUser.customId}`, {
+          method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ customId: currentUser.customId, name, whatsapp })
+          body: JSON.stringify({ name, whatsapp })
         });
         const data = await res.json();
         if (data.success) {
