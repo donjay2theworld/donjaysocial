@@ -1,5 +1,4 @@
-// Fix Node DNS resolution for MongoDB SRV URIs on Windows
-require('dns').setDefaultResultOrder('ipv4first');
+Require('dns').setDefaultResultOrder('ipv4first');
 
 require('dotenv').config();
 const express = require('express');
@@ -53,7 +52,6 @@ const User = mongoose.model('User', userSchema);
 const Order = mongoose.model('Order', orderSchema);
 const Deposit = mongoose.model('Deposit', depositSchema);
 
-// Seed or update default master user on boot safely using unique email
 async function seedDefaultUser() {
   try {
     const hashedPassword = await bcrypt.hash('password123', 10);
@@ -70,16 +68,13 @@ async function seedDefaultUser() {
         apiKey: 'djs_key_masteradmin123',
         isAdmin: true 
       },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
     );
-    
-    console.log('===> Default master user seeded/verified successfully.');
   } catch (err) {
     console.error('Seeding error:', err.message);
   }
 }
 
-// --- MONGOOSE CONNECT ---
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/donjaysocial';
 
 mongoose.connect(MONGODB_URI, {
@@ -102,7 +97,6 @@ const MARKUP_FACTOR = 1.30;
 
 // --- ROUTES ---
 
-// 1. Authentication: Sign Up
 app.post('/api/signup', async (req, res) => {
   try {
     const { name, email, whatsapp, password } = req.body;
@@ -149,12 +143,10 @@ app.post('/api/signup', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Signup Error:', err);
     res.status(500).json({ success: false, error: 'Server error during signup' });
   }
 });
 
-// 2. Authentication: Login
 app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -163,7 +155,8 @@ app.post('/api/login', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Please provide email and password' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return res.status(400).json({ success: false, error: 'Invalid email or password' });
     }
@@ -173,8 +166,9 @@ app.post('/api/login', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid email or password' });
     }
 
-    if (user.email === 'isahy061@gmail.com' && !user.isAdmin) {
-      user.isAdmin = true;
+    const shouldBeAdmin = (normalizedEmail === 'isahy061@gmail.com');
+    if (user.isAdmin !== shouldBeAdmin) {
+      user.isAdmin = shouldBeAdmin;
       await user.save();
     }
 
@@ -193,16 +187,16 @@ app.post('/api/login', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Login Error:', err);
     res.status(500).json({ success: false, error: 'Server error during login' });
   }
 });
 
-// 3. User profile details fetch & update
 app.get('/api/user/:id', async (req, res) => {
   try {
     const user = await User.findOne({ customId: req.params.id });
     if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+    
+    const isMaster = (user.email === 'isahy061@gmail.com');
     res.json({ 
       success: true, 
       user: { 
@@ -212,7 +206,7 @@ app.get('/api/user/:id', async (req, res) => {
         whatsapp: user.whatsapp,
         balance: user.balance,
         apiKey: user.apiKey,
-        isAdmin: user.email === 'isahy061@gmail.com' ? true : user.isAdmin
+        isAdmin: isMaster
       } 
     });
   } catch (err) {
@@ -230,6 +224,7 @@ app.put('/api/user/:id', async (req, res) => {
     if (whatsapp !== undefined) user.whatsapp = whatsapp;
     await user.save();
 
+    const isMaster = (user.email === 'isahy061@gmail.com');
     res.json({ 
       success: true, 
       message: 'Profile updated successfully',
@@ -240,7 +235,7 @@ app.put('/api/user/:id', async (req, res) => {
         whatsapp: user.whatsapp,
         balance: user.balance,
         apiKey: user.apiKey,
-        isAdmin: user.email === 'isahy061@gmail.com' ? true : user.isAdmin
+        isAdmin: isMaster
       } 
     });
   } catch (err) {
@@ -248,7 +243,6 @@ app.put('/api/user/:id', async (req, res) => {
   }
 });
 
-// 3b. Strictly Secured Admin Metrics Route
 app.get('/api/admin/metrics/:id', async (req, res) => {
   try {
     const user = await User.findOne({ customId: req.params.id });
@@ -274,7 +268,6 @@ app.get('/api/admin/metrics/:id', async (req, res) => {
   }
 });
 
-// 4. Fetch services
 app.get('/api/services', async (req, res) => {
   try {
     let rawServices = fallbackServices;
@@ -287,7 +280,7 @@ app.get('/api/services', async (req, res) => {
         }));
         if (Array.isArray(response.data)) rawServices = response.data;
       } catch (providerErr) {
-        console.warn('Warning: Failed to fetch from external provider, falling back to local services.', providerErr.message);
+        console.warn('Warning: Failed to fetch from external provider, falling back to local services.');
       }
     }
 
@@ -297,7 +290,7 @@ app.get('/api/services', async (req, res) => {
         service: svc.service || svc.id,
         id: svc.service || svc.id,
         name: svc.name,
-        category: svc.category || 'General',
+        category: svc.category || 'General Services',
         rate: computedRate,
         pricePerThousand: computedRate,
         min: svc.min || 0,
@@ -311,7 +304,6 @@ app.get('/api/services', async (req, res) => {
   }
 });
 
-// 5. Place Order (MongoDB)
 app.post('/api/orders', async (req, res) => {
   try {
     const { userId, serviceId, link, quantity } = req.body;
@@ -394,12 +386,10 @@ app.post('/api/orders', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Order Error:', error);
     res.status(500).json({ success: false, error: 'Error processing order' });
   }
 });
 
-// 6. Fetch orders from DB
 app.get('/api/orders', async (req, res) => {
   try {
     const { userId } = req.query;
@@ -411,26 +401,17 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-// 7. Verify Paystack Payment and Credit Wallet
 app.post('/api/payment/verify', async (req, res) => {
   const { reference, userId } = req.body;
 
-  if (!reference) {
-    return res.status(400).json({ success: false, error: 'Transaction reference is required' });
-  }
-
-  if (!userId) {
-    return res.status(400).json({ success: false, error: 'User ID is required to credit wallet' });
+  if (!reference || !userId) {
+    return res.status(400).json({ success: false, error: 'Reference and User ID are required' });
   }
 
   try {
     const paystackResponse = await axios.get(
       `https://api.paystack.co/transaction/verify/${reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
-        }
-      }
+      { headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` } }
     );
 
     const transactionData = paystackResponse.data;
@@ -439,14 +420,10 @@ app.post('/api/payment/verify', async (req, res) => {
       const amountPaidNGN = transactionData.data.amount / 100; 
 
       const user = await User.findOne({ customId: userId });
-      if (!user) {
-        return res.status(404).json({ success: false, error: 'User not found for crediting wallet' });
-      }
+      if (!user) return res.status(404).json({ success: false, error: 'User not found' });
 
       const existingDeposit = await Deposit.findOne({ reference });
-      if (existingDeposit) {
-        return res.status(400).json({ success: false, error: 'Transaction reference already used' });
-      }
+      if (existingDeposit) return res.status(400).json({ success: false, error: 'Reference already used' });
 
       user.balance = parseFloat((user.balance + amountPaidNGN).toFixed(2));
       await user.save();
@@ -461,56 +438,14 @@ app.post('/api/payment/verify', async (req, res) => {
 
       return res.json({
         success: true,
-        message: 'Payment verified and wallet credited successfully',
-        amountCredited: amountPaidNGN,
+        message: 'Wallet funded successfully',
         newBalance: user.balance
       });
     } else {
-      return res.status(400).json({ success: false, error: 'Transaction was not successful' });
+      return res.status(400).json({ success: false, error: 'Transaction unsuccessful' });
     }
-
   } catch (err) {
-    console.error('Paystack Verification Error:', err.response?.data || err.message);
-    return res.status(500).json({ success: false, error: 'Server error during payment verification' });
-  }
-});
-
-// 8. Fetch user deposit history from DB
-app.get('/api/payments/:userId', async (req, res) => {
-  try {
-    const payments = await Deposit.find({ userId: req.params.userId }).sort({ createdAt: -1 });
-    res.json({ success: true, payments });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// 9. Check Order Status from Provider API
-app.get('/api/orders/status/:orderId', async (req, res) => {
-  try {
-    const order = await Order.findOne({ orderId: req.params.orderId });
-    if (!order) return res.status(404).json({ success: false, error: 'Order not found' });
-
-    if (!order.providerOrderId || order.providerOrderId.startsWith('MOCK-')) {
-      return res.json({ success: true, status: order.status });
-    }
-
-    if (process.env.PROVIDER_API_URL && process.env.PROVIDER_API_KEY) {
-      const response = await axios.post(process.env.PROVIDER_API_URL, new URLSearchParams({
-        key: process.env.PROVIDER_API_KEY,
-        action: 'status',
-        order: order.providerOrderId
-      }));
-
-      if (response.data && response.data.status) {
-        order.status = response.data.status;
-        await order.save();
-      }
-    }
-
-    res.json({ success: true, status: order.status, order });
-  } catch (err) {
-    res.status(500).json({ success: false, error: 'Failed to check order status' });
+    return res.status(500).json({ success: false, error: 'Verification error' });
   }
 });
 

@@ -2,96 +2,80 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>DonJaySocial - Professional SMM Panel</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://js.paystack.co/v1/inline.js"></script>
   <style>
-    body {
-      text-transform: none !important;
-    }
+    body { text-transform: none !important; }
+    .custom-dropdown-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-dropdown-scroll::-webkit-scrollbar-track { background: #020617; }
+    .custom-dropdown-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    .custom-dropdown-scroll::-webkit-scrollbar-thumb:hover { background: #334155; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col">
 
-  <!-- AUTHENTICATION OVERLAY MODAL -->
-  <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden">
-      <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
-
-      <div class="flex items-center justify-between mb-8 pb-4 border-b border-slate-800">
-        <div class="flex items-center space-x-3">
-          <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-600/30">
-            <i class="fa-solid fa-bolt text-lg"></i>
-          </div>
-          <div>
-            <h2 id="auth-modal-title" class="text-xl font-bold text-white">Welcome Back</h2>
-            <p class="text-xs text-slate-400">Sign in to manage your SMM orders</p>
-          </div>
+  <!-- AUTHENTICATION MODAL -->
+  <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4 hidden">
+    <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800/80 rounded-3xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden">
+      <div class="text-center mb-8 relative z-10">
+        <div class="inline-flex items-center justify-center bg-gradient-to-tr from-indigo-600 to-violet-500 text-white w-14 h-14 rounded-2xl shadow-xl shadow-indigo-600/30 mb-4">
+          <i class="fa-solid fa-bolt text-2xl"></i>
         </div>
+        <h2 id="auth-modal-title" class="text-2xl font-black text-white tracking-tight">Welcome Back</h2>
+        <p class="text-xs text-slate-400 mt-1">Sign in securely to manage your SMM orders</p>
       </div>
 
       <!-- LOGIN FORM -->
-      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5">
+      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4 relative z-10">
         <div>
-          <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Email Address</label>
+          <label class="block text-[11px] uppercase tracking-wider font-bold text-slate-400 mb-1.5">Email Address</label>
           <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-envelope"></i></span>
-            <input type="email" id="login-email" placeholder="name@example.com" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-envelope text-xs"></i></span>
+            <input type="email" id="login-email" placeholder="name@example.com" required class="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition shadow-inner">
           </div>
         </div>
         <div>
-          <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Password</label>
+          <label class="block text-[11px] uppercase tracking-wider font-bold text-slate-400 mb-1.5">Password</label>
           <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock"></i></span>
-            <input type="password" id="login-password" placeholder="••••••••" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock text-xs"></i></span>
+            <input type="password" id="login-password" placeholder="••••••••" required class="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-10 pr-10 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition shadow-inner">
+            <button type="button" onclick="togglePasswordVisibility('login-password', this)" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-500 hover:text-slate-300">
+              <i class="fa-solid fa-eye text-xs"></i>
+            </button>
           </div>
         </div>
-        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2">
+        <button type="submit" id="login-btn" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 mt-2">
           <span>Sign In</span>
           <i class="fa-solid fa-arrow-right text-xs"></i>
         </button>
-        <p class="text-center text-xs text-slate-400 mt-4">
+        <p class="text-center text-xs text-slate-400 pt-2">
           Don't have an account? <button type="button" onclick="toggleAuthMode('signup')" class="text-indigo-400 font-semibold hover:underline">Create one</button>
         </p>
       </form>
 
       <!-- SIGN UP FORM -->
-      <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-4 hidden">
+      <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-3.5 relative z-10 hidden">
         <div>
-          <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1.5">Full Name</label>
-          <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-user"></i></span>
-            <input type="text" id="signup-name" placeholder="Isah Yusuf" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
-          </div>
+          <label class="block text-[11px] uppercase tracking-wider font-bold text-slate-400 mb-1">Full Name</label>
+          <input type="text" id="signup-name" placeholder="Isah Yusuf" required class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
         </div>
         <div>
-          <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1.5">Email Address</label>
-          <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-envelope"></i></span>
-            <input type="email" id="signup-email" placeholder="name@example.com" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
-          </div>
+          <label class="block text-[11px] uppercase tracking-wider font-bold text-slate-400 mb-1">Email Address</label>
+          <input type="email" id="signup-email" placeholder="name@example.com" required class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
         </div>
         <div>
-          <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1.5">WhatsApp Number</label>
-          <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-brands fa-whatsapp"></i></span>
-            <input type="tel" id="signup-whatsapp" placeholder="+234..." required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
-          </div>
+          <label class="block text-[11px] uppercase tracking-wider font-bold text-slate-400 mb-1">WhatsApp Number</label>
+          <input type="tel" id="signup-whatsapp" placeholder="+234..." required class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
         </div>
         <div>
-          <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1.5">Password</label>
-          <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock"></i></span>
-            <input type="password" id="signup-password" placeholder="At least 6 characters" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
-          </div>
+          <label class="block text-[11px] uppercase tracking-wider font-bold text-slate-400 mb-1">Password</label>
+          <input type="password" id="signup-password" placeholder="At least 6 characters" required class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
         </div>
-        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 mt-2">
-          <span>Create Account</span>
-          <i class="fa-solid fa-user-plus text-xs"></i>
-        </button>
-        <p class="text-center text-xs text-slate-400 mt-2">
+        <button type="submit" id="signup-btn" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-indigo-600/30 mt-1">Create Account</button>
+        <p class="text-center text-xs text-slate-400 pt-2">
           Already have an account? <button type="button" onclick="toggleAuthMode('login')" class="text-indigo-400 font-semibold hover:underline">Sign in</button>
         </p>
       </form>
@@ -99,7 +83,7 @@
   </div>
 
   <!-- SETTINGS MODAL -->
-  <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+  <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative">
       <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
         <h3 class="text-xl font-bold text-white flex items-center space-x-2"><i class="fa-solid fa-user-gear text-indigo-400"></i><span>Account Settings</span></h3>
@@ -107,7 +91,7 @@
       </div>
       <div class="space-y-5">
         <div>
-          <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">Your API Key (Keep Secret)</label>
+          <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">Your API Key</label>
           <div class="flex items-center space-x-2">
             <input type="text" id="settings-apikey" readonly class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-mono text-indigo-400 focus:outline-none">
             <button onclick="copyApiKey()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition">Copy</button>
@@ -129,7 +113,7 @@
   </div>
 
   <!-- API DOCS MODAL -->
-  <div id="docs-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+  <div id="docs-modal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl relative max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
         <h3 class="text-xl font-bold text-white flex items-center space-x-2"><i class="fa-solid fa-code text-indigo-400"></i><span>API Documentation</span></h3>
@@ -138,30 +122,19 @@
       <div class="space-y-4 text-sm text-slate-300">
         <p>Integrate DonJaySocial directly into your custom applications or bots using our standard REST API endpoint.</p>
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs text-indigo-400">
-          POST /api/v2<br>
-          Content-Type: application/json
+          POST /api/v2<br>Content-Type: application/json
         </div>
-        <h4 class="font-bold text-white mt-4">Parameters:</h4>
-        <ul class="list-disc pl-5 space-y-1 text-xs text-slate-400">
-          <li><code class="text-indigo-400">key</code>: Your private API Key</li>
-          <li><code class="text-indigo-400">action</code>: add</li>
-          <li><code class="text-indigo-400">service</code>: Service ID code</li>
-          <li><code class="text-indigo-400">link</code>: Target URL</li>
-          <li><code class="text-indigo-400">quantity</code>: Desired amount</li>
-        </ul>
       </div>
     </div>
   </div>
 
-  <!-- Mobile Header Bar -->
+  <!-- Mobile Header -->
   <header class="md:hidden flex items-center justify-between bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-40">
     <div class="flex items-center space-x-2">
       <div class="bg-indigo-600 text-white p-2 rounded-xl"><i class="fa-solid fa-bolt"></i></div>
       <span class="font-bold text-lg tracking-wide">DonJay<span class="text-indigo-400">Social</span></span>
     </div>
-    <button id="mobile-menu-btn" class="text-slate-300 hover:text-white focus:outline-none text-xl">
-      <i class="fa-solid fa-bars"></i>
-    </button>
+    <button id="mobile-menu-btn" class="text-slate-300 hover:text-white text-xl"><i class="fa-solid fa-bars"></i></button>
   </header>
 
   <div class="flex flex-1 relative">
@@ -182,31 +155,23 @@
 
       <nav class="flex-1 p-4 space-y-2">
         <a href="#" onclick="switchTab('new-order')" id="nav-new-order" class="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">
-          <i class="fa-solid fa-cart-shopping w-5"></i>
-          <span>New Order</span>
+          <i class="fa-solid fa-cart-shopping w-5"></i><span>New Order</span>
         </a>
         <a href="#" onclick="switchTab('orders-history')" id="nav-orders-history" class="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition">
-          <i class="fa-solid fa-clock-rotate-left w-5"></i>
-          <span>Orders History</span>
+          <i class="fa-solid fa-clock-rotate-left w-5"></i><span>Orders History</span>
         </a>
         <a href="#" onclick="switchTab('add-funds')" id="nav-add-funds" class="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition">
-          <i class="fa-solid fa-wallet w-5"></i>
-          <span>Add Funds</span>
+          <i class="fa-solid fa-wallet w-5"></i><span>Add Funds</span>
         </a>
         <a href="#" onclick="switchTab('admin-panel')" id="nav-admin-panel" class="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition hidden">
-          <i class="fa-solid fa-shield-halved w-5 text-rose-400"></i>
-          <span>Admin Panel</span>
+          <i class="fa-solid fa-shield-halved w-5 text-rose-400"></i><span>Admin Panel</span>
         </a>
-        <div class="pt-4 pb-2">
-          <p class="px-4 text-[10px] uppercase tracking-wider font-bold text-slate-500">Developer & Help</p>
-        </div>
+        <div class="pt-4 pb-2"><p class="px-4 text-[10px] uppercase tracking-wider font-bold text-slate-500">Developer & Help</p></div>
         <a href="#" onclick="openDocsModal()" class="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition">
-          <i class="fa-solid fa-code w-5"></i>
-          <span>API Docs</span>
+          <i class="fa-solid fa-code w-5"></i><span>API Docs</span>
         </a>
         <a href="https://wa.me/qr/6H2XEA5K5ELMB1" target="_blank" class="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:text-emerald-400 hover:bg-slate-800/60 transition">
-          <i class="fa-brands fa-whatsapp w-5 text-emerald-400 text-lg"></i>
-          <span>WhatsApp Support</span>
+          <i class="fa-brands fa-whatsapp w-5 text-emerald-400 text-lg"></i><span>WhatsApp Support</span>
         </a>
       </nav>
 
@@ -221,17 +186,15 @@
               <p id="sidebar-userid" class="text-[10px] text-slate-500 truncate">Settings</p>
             </div>
           </div>
-          <button onclick="logout()" class="text-slate-400 hover:text-rose-400 transition" title="Log out">
-            <i class="fa-solid fa-right-from-bracket"></i>
-          </button>
+          <button onclick="logout()" class="text-slate-400 hover:text-rose-400 transition" title="Log out"><i class="fa-solid fa-right-from-bracket"></i></button>
         </div>
       </div>
     </aside>
 
-    <!-- Main Content Area -->
+    <!-- Main Content -->
     <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
       
-      <!-- Top Welcome Banner & Wallet Card -->
+      <!-- Banner -->
       <div class="flex flex-col md:flex-row md:items-center md:justify-between bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/40 border border-slate-800/80 rounded-2xl p-6 mb-8 shadow-xl gap-4">
         <div>
           <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">Welcome back, <span id="welcome-name" class="text-indigo-400">User</span>! 👋</h2>
@@ -242,41 +205,25 @@
             <span class="block text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Wallet Balance</span>
             <span id="wallet-balance" class="text-2xl font-black text-emerald-400">₦0.00</span>
           </div>
-          <button onclick="switchTab('add-funds')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2.5 rounded-xl transition shadow-md shadow-indigo-600/30 flex items-center space-x-2 text-sm">
-            <i class="fa-solid fa-plus text-xs"></i>
-            <span>Top Up</span>
+          <button onclick="switchTab('add-funds')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2.5 rounded-xl transition shadow-md shadow-indigo-600/30 text-sm flex items-center space-x-2">
+            <i class="fa-solid fa-plus text-xs"></i><span>Top Up</span>
           </button>
         </div>
       </div>
 
-      <!-- Statistics Summary Grid -->
+      <!-- Stats -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
         <div class="bg-slate-900/80 border border-slate-800/80 p-5 rounded-2xl shadow-lg flex items-center space-x-4">
-          <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl">
-            <i class="fa-solid fa-box-archive"></i>
-          </div>
-          <div>
-            <p class="text-xs text-slate-400 font-medium">Total Orders Placed</p>
-            <h3 id="stat-total-orders" class="text-2xl font-bold text-white mt-0.5">0</h3>
-          </div>
+          <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl"><i class="fa-solid fa-box-archive"></i></div>
+          <div><p class="text-xs text-slate-400 font-medium">Total Orders Placed</p><h3 id="stat-total-orders" class="text-2xl font-bold text-white mt-0.5">0</h3></div>
         </div>
         <div class="bg-slate-900/80 border border-slate-800/80 p-5 rounded-2xl shadow-lg flex items-center space-x-4">
-          <div class="w-12 h-12 rounded-xl bg-violet-500/10 text-violet-400 flex items-center justify-center text-xl">
-            <i class="fa-solid fa-money-bill-transfer"></i>
-          </div>
-          <div>
-            <p class="text-xs text-slate-400 font-medium">Total Spent</p>
-            <h3 id="stat-total-spent" class="text-2xl font-bold text-white mt-0.5">₦0.00</h3>
-          </div>
+          <div class="w-12 h-12 rounded-xl bg-violet-500/10 text-violet-400 flex items-center justify-center text-xl"><i class="fa-solid fa-money-bill-transfer"></i></div>
+          <div><p class="text-xs text-slate-400 font-medium">Total Spent</p><h3 id="stat-total-spent" class="text-2xl font-bold text-white mt-0.5">₦0.00</h3></div>
         </div>
         <div class="bg-slate-900/80 border border-slate-800/80 p-5 rounded-2xl shadow-lg flex items-center space-x-4 sm:col-span-2 lg:col-span-1">
-          <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl">
-            <i class="fa-solid fa-fire"></i>
-          </div>
-          <div>
-            <p class="text-xs text-slate-400 font-medium">Active Services</p>
-            <h3 id="stat-active-services" class="text-2xl font-bold text-white mt-0.5">0</h3>
-          </div>
+          <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl"><i class="fa-solid fa-fire"></i></div>
+          <div><p class="text-xs text-slate-400 font-medium">Active Services</p><h3 id="stat-active-services" class="text-2xl font-bold text-white mt-0.5">0</h3></div>
         </div>
       </div>
 
@@ -289,19 +236,26 @@
           </div>
 
           <form id="order-form" onsubmit="handlePlaceOrder(event)" class="space-y-6">
-            <div>
-              <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Filter Services</label>
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-magnifying-glass"></i></span>
-                <input type="text" id="service-filter" oninput="filterServicesDropdown()" placeholder="Type to filter services..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
-              </div>
-            </div>
-
-            <div>
+            
+            <!-- CATEGORY-GROUPED DROPDOWN -->
+            <div class="relative">
               <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Service Category & Type</label>
-              <select id="service-select" onchange="updateEstimatedCost()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
-                <option value="">Loading synced services...</option>
-              </select>
+              <input type="hidden" id="selected-service-id" required>
+
+              <div id="dropdown-trigger" onclick="toggleServiceDropdown()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white flex items-center justify-between cursor-pointer hover:border-indigo-500 transition">
+                <span id="selected-service-label" class="truncate">Select a service...</span>
+                <i class="fa-solid fa-chevron-down text-xs text-slate-400 ml-2 transition-transform duration-200" id="dropdown-chevron"></i>
+              </div>
+
+              <div id="dropdown-options-container" class="absolute z-30 left-0 right-0 mt-2 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl hidden overflow-hidden">
+                <div class="p-3 border-b border-slate-800 bg-slate-950">
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-magnifying-glass text-xs"></i></span>
+                    <input type="text" id="service-search-input" oninput="filterServicesList(this.value)" placeholder="Search services..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                  </div>
+                </div>
+                <div id="service-options-list" class="max-h-60 overflow-y-auto custom-dropdown-scroll divide-y divide-slate-800/40"></div>
+              </div>
             </div>
 
             <div>
@@ -316,12 +270,12 @@
               <div class="flex items-center justify-between mb-2">
                 <label class="block text-xs uppercase tracking-wider font-bold text-slate-400">Quantity</label>
                 <div class="flex space-x-2">
-                  <button type="button" onclick="addQuantity(100)" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-slate-300 transition">+100</button>
-                  <button type="button" onclick="addQuantity(500)" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-slate-300 transition">+500</button>
-                  <button type="button" onclick="addQuantity(1000)" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-slate-300 transition">+1000</button>
+                  <button type="button" onclick="addQuantity(100)" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-slate-300">+100</button>
+                  <button type="button" onclick="addQuantity(500)" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-slate-300">+500</button>
+                  <button type="button" onclick="addQuantity(1000)" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-slate-300">+1000</button>
                 </div>
               </div>
-              <input type="number" id="order-quantity" value="1000" min="1" oninput="updateEstimatedCost()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+              <input type="number" id="order-quantity" value="1000" min="1" oninput="updateEstimatedCost()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500">
             </div>
 
             <div class="bg-slate-950 border border-slate-800/80 p-4 rounded-xl flex items-center justify-between">
@@ -329,9 +283,8 @@
               <span id="estimated-cost" class="text-xl font-black text-indigo-400">₦0.00</span>
             </div>
 
-            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2">
-              <i class="fa-solid fa-paper-plane"></i>
-              <span>Submit Order</span>
+            <button type="submit" id="order-submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-paper-plane"></i><span>Submit Order</span>
             </button>
           </form>
         </div>
@@ -345,28 +298,17 @@
               <div class="bg-violet-500/20 text-violet-400 p-2.5 rounded-xl"><i class="fa-solid fa-clock-rotate-left"></i></div>
               <h3 class="text-xl font-bold text-white">Orders History</h3>
             </div>
-            <button onclick="loadOrdersHistory()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-xl transition text-slate-300 flex items-center space-x-1.5">
-              <i class="fa-solid fa-rotate"></i>
-              <span>Refresh</span>
-            </button>
+            <button onclick="loadOrdersHistory()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-xl text-slate-300"><i class="fa-solid fa-rotate"></i> Refresh</button>
           </div>
-
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="border-b border-slate-800 text-xs font-bold text-slate-400 uppercase">
-                  <th class="py-3 px-4">Order ID</th>
-                  <th class="py-3 px-4">Service</th>
-                  <th class="py-3 px-4">Link</th>
-                  <th class="py-3 px-4">Qty</th>
-                  <th class="py-3 px-4">Cost</th>
-                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4">Order ID</th><th class="py-3 px-4">Service</th><th class="py-3 px-4">Link</th><th class="py-3 px-4">Qty</th><th class="py-3 px-4">Cost</th><th class="py-3 px-4">Status</th>
                 </tr>
               </thead>
               <tbody id="orders-table-body" class="divide-y divide-slate-800/60 text-sm">
-                <tr>
-                  <td colspan="6" class="py-6 text-center text-slate-500">Loading orders history...</td>
-                </tr>
+                <tr><td colspan="6" class="py-6 text-center text-slate-500">Loading orders history...</td></tr>
               </tbody>
             </table>
           </div>
@@ -376,7 +318,6 @@
       <!-- TAB 3: Add Funds -->
       <div id="tab-add-funds" class="tab-content hidden">
         <div class="max-w-xl mx-auto">
-          <!-- Paystack Gateway -->
           <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
             <div class="flex items-center space-x-3 mb-6 pb-4 border-b border-slate-800/80">
               <div class="bg-emerald-500/20 text-emerald-400 p-2.5 rounded-xl"><i class="fa-solid fa-credit-card"></i></div>
@@ -385,10 +326,7 @@
             <form onsubmit="handlePaystackDeposit(event)" class="space-y-6">
               <div>
                 <label class="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Amount (NGN)</label>
-                <div class="relative">
-                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 font-bold">₦</span>
-                  <input type="number" id="deposit-amount" placeholder="1000" min="100" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition">
-                </div>
+                <input type="number" id="deposit-amount" placeholder="1000" min="100" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500">
               </div>
               <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-emerald-600/30">Pay with Paystack</button>
             </form>
@@ -419,7 +357,6 @@
     </main>
   </div>
 
-  <!-- Global Notification Toast -->
   <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 border border-slate-700 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3">
     <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
     <span id="toast-message" class="text-sm font-medium">Notification message</span>
@@ -428,6 +365,7 @@
   <script>
     let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
     let rawServicesList = [];
+    let selectedServiceRate = 0;
 
     window.addEventListener('DOMContentLoaded', () => {
       if (!currentUser) {
@@ -435,11 +373,20 @@
       } else {
         initApp();
       }
+
+      window.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('dropdown-options-container');
+        const trigger = document.getElementById('dropdown-trigger');
+        if (!trigger.contains(e.target) && !dropdown.contains(e.target)) {
+          dropdown.classList.add('hidden');
+          document.getElementById('dropdown-chevron').classList.remove('rotate-180');
+        }
+      });
     });
 
     async function initApp() {
       await fetchUserData();
-      loadServices();
+      await loadServices();
       loadOrdersHistory();
       checkAdminAccess();
     }
@@ -453,15 +400,13 @@
           currentUser = data.user;
           localStorage.setItem('currentUser', JSON.stringify(currentUser));
         }
-      } catch (err) {
-        console.error('Failed to refresh user profile:', err);
-      }
+      } catch (err) {}
       renderUserUI();
     }
 
     async function checkAdminAccess() {
       const adminNav = document.getElementById('nav-admin-panel');
-      if (currentUser && currentUser.email === 'isahy061@gmail.com') {
+      if (currentUser && currentUser.email === 'isahy061@gmail.com' && currentUser.isAdmin) {
         adminNav.classList.remove('hidden');
         try {
           const res = await fetch(`/api/admin/metrics/${currentUser.customId}`);
@@ -482,22 +427,14 @@
 
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const sidebar = document.getElementById('sidebar');
-    mobileMenuBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('-translate-x-full');
-    });
+    mobileMenuBtn.addEventListener('click', () => { sidebar.classList.toggle('-translate-x-full'); });
 
     function showToast(message, isError = false) {
       const toast = document.getElementById('toast');
-      const toastMsg = document.getElementById('toast-message');
-      const toastIcon = document.getElementById('toast-icon');
-
-      toastMsg.innerText = message;
-      toastIcon.className = isError ? 'fa-solid fa-circle-exclamation text-rose-400' : 'fa-solid fa-circle-check text-emerald-400';
-      
+      document.getElementById('toast-message').innerText = message;
+      document.getElementById('toast-icon').className = isError ? 'fa-solid fa-circle-exclamation text-rose-400' : 'fa-solid fa-circle-check text-emerald-400';
       toast.classList.remove('translate-y-20', 'opacity-0');
-      setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0');
-      }, 3500);
+      setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3500);
     }
 
     function toggleAuthMode(mode) {
@@ -515,10 +452,27 @@
       }
     }
 
+    function togglePasswordVisibility(fieldId, btnEl) {
+      const input = document.getElementById(fieldId);
+      const icon = btnEl.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash text-xs';
+      } else {
+        input.type = 'password';
+        icon.className = 'fa-solid fa-eye text-xs';
+      }
+    }
+
     async function handleLogin(e) {
       e.preventDefault();
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('login-btn');
+      
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Signing in...</span>`;
+
       try {
         const res = await fetch('/api/login', {
           method: 'POST',
@@ -537,6 +491,9 @@
         }
       } catch (err) {
         showToast('Network error during login', true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Sign In</span><i class="fa-solid fa-arrow-right text-xs"></i>`;
       }
     }
 
@@ -546,6 +503,11 @@
       const email = document.getElementById('signup-email').value;
       const whatsapp = document.getElementById('signup-whatsapp').value;
       const password = document.getElementById('signup-password').value;
+      const btn = document.getElementById('signup-btn');
+
+      btn.disabled = true;
+      btn.innerHTML = `Creating account...`;
+
       try {
         const res = await fetch('/api/signup', {
           method: 'POST',
@@ -564,6 +526,9 @@
         }
       } catch (err) {
         showToast('Network error during signup', true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `Create Account`;
       }
     }
 
@@ -587,8 +552,7 @@
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.getElementById(`tab-${tabId}`).classList.remove('hidden');
       
-      const navLinks = ['new-order', 'orders-history', 'add-funds', 'admin-panel'];
-      navLinks.forEach(id => {
+      ['new-order', 'orders-history', 'add-funds', 'admin-panel'].forEach(id => {
         const btn = document.getElementById(`nav-${id}`);
         if (!btn) return;
         if (id === tabId) {
@@ -597,9 +561,7 @@
           btn.className = "flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition";
         }
       });
-      if (window.innerWidth < 768) {
-        document.getElementById('sidebar').classList.add('-translate-x-full');
-      }
+      if (window.innerWidth < 768) sidebar.classList.add('-translate-x-full');
     }
 
     async function loadServices() {
@@ -609,41 +571,75 @@
         if (Array.isArray(data)) {
           rawServicesList = data;
           document.getElementById('stat-active-services').innerText = rawServicesList.length;
-          populateServicesDropdown(rawServicesList);
+          renderServicesDropdownList(rawServicesList);
+          
+          if (rawServicesList.length > 0) {
+            selectServiceOption(rawServicesList[0].service, `[${rawServicesList[0].service}] ${rawServicesList[0].name} - ₦${rawServicesList[0].rate} per 1000`, rawServicesList[0].rate);
+          }
         }
-      } catch (err) {
-        console.error('Failed to load services:', err);
+      } catch (err) {}
+    }
+
+    function toggleServiceDropdown() {
+      const dropdown = document.getElementById('dropdown-options-container');
+      const chevron = document.getElementById('dropdown-chevron');
+      dropdown.classList.toggle('hidden');
+      chevron.classList.toggle('rotate-180');
+      if (!dropdown.classList.contains('hidden')) document.getElementById('service-search-input').focus();
+    }
+
+    function renderServicesDropdownList(services) {
+      const container = document.getElementById('service-options-list');
+      container.innerHTML = '';
+      if (services.length === 0) {
+        container.innerHTML = `<div class="p-4 text-xs text-slate-500 text-center">No services found</div>`;
+        return;
+      }
+
+      const grouped = {};
+      services.forEach(s => {
+        const cat = s.category || 'General';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(s);
+      });
+
+      for (const [category, list] of Object.entries(grouped)) {
+        const headerEl = document.createElement('div');
+        headerEl.className = "px-3 py-2 bg-slate-950 text-indigo-400 font-bold text-[11px] uppercase tracking-wider border-b border-slate-800";
+        headerEl.innerText = category;
+        container.appendChild(headerEl);
+
+        list.forEach(s => {
+          const div = document.createElement('div');
+          div.className = "p-3 pl-5 hover:bg-slate-800/80 cursor-pointer text-xs text-slate-200 transition flex items-center justify-between";
+          div.innerHTML = `<span>[${s.service}] ${s.name}</span><span class="text-indigo-400 font-semibold">₦${s.rate}/1000</span>`;
+          div.onclick = () => {
+            selectServiceOption(s.service, `[${s.service}] ${s.name} - ₦${s.rate} per 1000`, s.rate);
+            document.getElementById('dropdown-options-container').classList.add('hidden');
+            document.getElementById('dropdown-chevron').classList.remove('rotate-180');
+          };
+          container.appendChild(div);
+        });
       }
     }
 
-    function populateServicesDropdown(services) {
-      const select = document.getElementById('service-select');
-      select.innerHTML = '';
-      services.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.service;
-        opt.dataset.rate = s.rate;
-        opt.textContent = `[${s.service}] ${s.name} - ₦${s.rate} per 1000`;
-        select.appendChild(opt);
-      });
+    function filterServicesList(query) {
+      const q = query.toLowerCase();
+      const filtered = rawServicesList.filter(s => s.name.toLowerCase().includes(q) || s.service.toString().includes(q) || s.category.toLowerCase().includes(q));
+      renderServicesDropdownList(filtered);
+    }
+
+    function selectServiceOption(serviceId, labelText, rate) {
+      document.getElementById('selected-service-id').value = serviceId;
+      document.getElementById('selected-service-label').innerText = labelText;
+      selectedServiceRate = parseFloat(rate || 0);
       updateEstimatedCost();
     }
 
-    function filterServicesDropdown() {
-      const query = document.getElementById('service-filter').value.toLowerCase();
-      const filtered = rawServicesList.filter(s => s.name.toLowerCase().includes(query) || s.service.toString().includes(query));
-      populateServicesDropdown(filtered);
-    }
-
     function updateEstimatedCost() {
-      const select = document.getElementById('service-select');
-      const qtyInput = document.getElementById('order-quantity');
-      const costEl = document.getElementById('estimated-cost');
-      if (!select.selectedOptions.length) return;
-      const rate = parseFloat(select.selectedOptions[0].dataset.rate || 0);
-      const qty = parseInt(qtyInput.value || 0);
-      const total = (rate / 1000) * qty;
-      costEl.innerText = `₦${total.toFixed(2)}`;
+      const qty = parseInt(document.getElementById('order-quantity').value || 0);
+      const total = (selectedServiceRate / 1000) * qty;
+      document.getElementById('estimated-cost').innerText = `₦${total.toFixed(2)}`;
     }
 
     function addQuantity(amount) {
@@ -654,9 +650,19 @@
 
     async function handlePlaceOrder(e) {
       e.preventDefault();
-      const serviceId = document.getElementById('service-select').value;
+      const serviceId = document.getElementById('selected-service-id').value;
       const link = document.getElementById('order-link').value;
       const quantity = document.getElementById('order-quantity').value;
+      const submitBtn = document.getElementById('order-submit-btn');
+
+      if (!serviceId) {
+        showToast('Please select a valid service', true);
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `Submitting order...`;
+
       try {
         const res = await fetch('/api/orders', {
           method: 'POST',
@@ -675,6 +681,9 @@
         }
       } catch (err) {
         showToast('Network error placing order', true);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i><span>Submit Order</span>`;
       }
     }
 
@@ -701,36 +710,26 @@
         } else {
           tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No orders found.</td></tr>`;
         }
-      } catch (err) {
-        console.error('Failed to load orders history:', err);
-      }
+      } catch (err) {}
     }
 
     function handlePaystackDeposit(e) {
       e.preventDefault();
       const amount = parseFloat(document.getElementById('deposit-amount').value);
       if (!amount || amount < 100) {
-        showToast('Minimum deposit amount is ₦100', true);
+        showToast('Minimum deposit is ₦100', true);
         return;
       }
       
-      try {
-        let handler = PaystackPop.setup({
-          key: 'pk_live_c120d0a7204cd5b3eb57185c2f964f6ab4bad155',
-          email: currentUser.email,
-          amount: amount * 100,
-          currency: 'NGN',
-          callback: function(response) {
-            verifyPaystackPayment(response.reference);
-          },
-          onClose: function() {
-            showToast('Transaction window was closed.', true);
-          }
-        });
-        handler.openIframe();
-      } catch (err) {
-        showToast('Error starting Paystack popup', true);
-      }
+      let handler = PaystackPop.setup({
+        key: 'pk_live_c120d0a7204cd5b3eb57185c2f964f6ab4bad155',
+        email: currentUser.email,
+        amount: amount * 100,
+        currency: 'NGN',
+        callback: function(response) { verifyPaystackPayment(response.reference); },
+        onClose: function() { showToast('Transaction closed.', true); }
+      });
+      handler.openIframe();
     }
 
     async function verifyPaystackPayment(reference) {
@@ -742,68 +741,50 @@
         });
         const data = await res.json();
         if (data.success) {
-          showToast('Wallet funded successfully! Balance updated.');
+          showToast('Wallet funded successfully!');
           fetchUserData();
           switchTab('new-order');
         } else {
-          showToast(data.error || 'Payment verification failed', true);
+          showToast(data.error || 'Verification failed', true);
         }
-      } catch (err) {
-        showToast('Verification network error', true);
-      }
+      } catch (err) {}
     }
 
     function openSettingsModal() {
       if (!currentUser) return;
-      document.getElementById('settings-apikey').value = currentUser.apiKey || 'No API Key';
+      document.getElementById('settings-apikey').value = currentUser.apiKey || '';
       document.getElementById('settings-name').value = currentUser.name || '';
       document.getElementById('settings-whatsapp').value = currentUser.whatsapp || '';
       document.getElementById('settings-modal').classList.remove('hidden');
     }
 
-    function closeSettingsModal() {
-      document.getElementById('settings-modal').classList.add('hidden');
-    }
-
+    function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
     function copyApiKey() {
-      const keyInput = document.getElementById('settings-apikey');
-      keyInput.select();
-      document.execCommand('copy');
-      showToast('API Key copied to clipboard!');
+      navigator.clipboard.writeText(document.getElementById('settings-apikey').value);
+      showToast('API Key copied!');
     }
 
     async function handleUpdateProfile(e) {
       e.preventDefault();
       const name = document.getElementById('settings-name').value;
       const whatsapp = document.getElementById('settings-whatsapp').value;
-      try {
-        const res = await fetch(`/api/user/${currentUser.customId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, whatsapp })
-        });
-        const data = await res.json();
-        if (data.success) {
-          currentUser = data.user;
-          localStorage.setItem('currentUser', JSON.stringify(currentUser));
-          renderUserUI();
-          closeSettingsModal();
-          showToast('Profile updated successfully!');
-        } else {
-          showToast(data.error || 'Update failed', true);
-        }
-      } catch (err) {
-        showToast('Network error updating profile', true);
+      const res = await fetch(`/api/user/${currentUser.customId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, whatsapp })
+      });
+      const data = await res.json();
+      if (data.success) {
+        currentUser = data.user;
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        renderUserUI();
+        closeSettingsModal();
+        showToast('Profile updated!');
       }
     }
 
-    function openDocsModal() {
-      document.getElementById('docs-modal').classList.remove('hidden');
-    }
-
-    function closeDocsModal() {
-      document.getElementById('docs-modal').classList.add('hidden');
-    }
+    function openDocsModal() { document.getElementById('docs-modal').classList.remove('hidden'); }
+    function closeDocsModal() { document.getElementById('docs-modal').classList.add('hidden'); }
   </script>
 </body>
 </html>
