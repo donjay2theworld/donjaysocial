@@ -121,10 +121,11 @@ app.put('/api/user/:customId', (req, res) => {
 
 app.get('/api/services', async (req, res) => {
   try {
-    const response = await axios.post(SMM_API_URL, {
-      key: SMM_API_KEY,
-      action: 'services'
-    });
+    const params = new URLSearchParams();
+    params.append('key', SMM_API_KEY);
+    params.append('action', 'services');
+
+    const response = await axios.post(SMM_API_URL, params);
     res.json(response.data);
   } catch (err) {
     res.status(500).json({ success: false, error: 'Failed to fetch services from provider' });
@@ -138,10 +139,11 @@ app.post('/api/orders', async (req, res) => {
     
     if (!user) return res.status(404).json({ success: false, error: 'User not found' });
 
-    const servicesRes = await axios.post(SMM_API_URL, {
-      key: SMM_API_KEY,
-      action: 'services'
-    });
+    const servicesParams = new URLSearchParams();
+    servicesParams.append('key', SMM_API_KEY);
+    servicesParams.append('action', 'services');
+
+    const servicesRes = await axios.post(SMM_API_URL, servicesParams);
     
     const service = servicesRes.data.find(s => (s.service || s.id).toString() === serviceId.toString());
     if (!service) return res.status(400).json({ success: false, error: 'Selected service not found' });
@@ -154,13 +156,14 @@ app.post('/api/orders', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Insufficient wallet balance. Please top up.' });
     }
 
-    const smmOrderRes = await axios.post(SMM_API_URL, {
-      key: SMM_API_KEY,
-      action: 'add',
-      service: serviceId,
-      link,
-      quantity
-    });
+    const orderParams = new URLSearchParams();
+    orderParams.append('key', SMM_API_KEY);
+    orderParams.append('action', 'add');
+    orderParams.append('service', serviceId);
+    orderParams.append('link', link);
+    orderParams.append('quantity', quantity);
+
+    const smmOrderRes = await axios.post(SMM_API_URL, orderParams);
 
     if (smmOrderRes.data && smmOrderRes.data.order) {
       user.balance -= totalCost;
