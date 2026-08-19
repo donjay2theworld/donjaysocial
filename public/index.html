@@ -569,12 +569,21 @@
         const res = await fetch('/api/services');
         const data = await res.json();
         if (Array.isArray(data)) {
-          rawServicesList = data;
+          // Apply 65% markup (multiplying base API rates by 1.65)
+          rawServicesList = data.map(s => {
+            const baseRate = parseFloat(s.rate || 0);
+            const markedUpRate = baseRate * 1.65;
+            return {
+              ...s,
+              rate: markedUpRate.toFixed(2)
+            };
+          });
+
           document.getElementById('stat-active-services').innerText = rawServicesList.length;
           renderServicesDropdownList(rawServicesList);
           
           if (rawServicesList.length > 0) {
-            selectServiceOption(rawServicesList[0].service, `[${rawServicesList[0].service}] ${rawServicesList[0].name} - ₦${rawServicesList[0].rate} per 1000`, rawServicesList[0].rate);
+            selectServiceOption(rawServicesList[0].service || rawServicesList[0].id, `[${rawServicesList[0].service || rawServicesList[0].id}] ${rawServicesList[0].name} - ₦${rawServicesList[0].rate} per 1000`, rawServicesList[0].rate);
           }
         }
       } catch (err) {}
@@ -610,11 +619,12 @@
         container.appendChild(headerEl);
 
         list.forEach(s => {
+          const sId = s.service || s.id;
           const div = document.createElement('div');
           div.className = "p-3 pl-5 hover:bg-slate-800/80 cursor-pointer text-xs text-slate-200 transition flex items-center justify-between";
-          div.innerHTML = `<span>[${s.service}] ${s.name}</span><span class="text-indigo-400 font-semibold">₦${s.rate}/1000</span>`;
+          div.innerHTML = `<span>[${sId}] ${s.name}</span><span class="text-indigo-400 font-semibold">₦${s.rate}/1000</span>`;
           div.onclick = () => {
-            selectServiceOption(s.service, `[${s.service}] ${s.name} - ₦${s.rate} per 1000`, s.rate);
+            selectServiceOption(sId, `[${sId}] ${s.name} - ₦${s.rate} per 1000`, s.rate);
             document.getElementById('dropdown-options-container').classList.add('hidden');
             document.getElementById('dropdown-chevron').classList.remove('rotate-180');
           };
@@ -625,7 +635,7 @@
 
     function filterServicesList(query) {
       const q = query.toLowerCase();
-      const filtered = rawServicesList.filter(s => s.name.toLowerCase().includes(q) || s.service.toString().includes(q) || s.category.toLowerCase().includes(q));
+      const filtered = rawServicesList.filter(s => s.name.toLowerCase().includes(q) || (s.service || s.id).toString().includes(q) || s.category.toLowerCase().includes(q));
       renderServicesDropdownList(filtered);
     }
 
@@ -637,9 +647,20 @@
     }
 
     function updateEstimatedCost() {
-      const qty = parseInt(document.getElementById('order-quantity').value || 0);
+      const qtyInput = document.getElementById('order-quantity');
+      if (!qtyInput) return;
+      const qty = parseInt(qtyInput.value || 0);
       const total = (selectedServiceRate / 1000) * qty;
-      document.getElementById('estimated-cost').innerText = `₦${total.toFixed(2)}`;
+      
+      const costElement = document.getElementById('estimated-cost');
+      const submitBtn = document.getElementById('order-submit-btn');
+      
+      if (costElement) {
+        costElement.innerText = `₦${isNaN(total) ? '0.00' : total.toFixed(2)}`;
+      }
+      if (submitBtn) {
+        submitBtn.disabled = (qty <= 0);
+      }
     }
 
     function addQuantity(amount) {
