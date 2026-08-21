@@ -254,7 +254,9 @@
                     <input type="text" id="service-search-input" oninput="filterServicesList(this.value)" placeholder="Search services..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
                   </div>
                 </div>
-                <div id="service-options-list" class="max-h-60 overflow-y-auto custom-dropdown-scroll divide-y divide-slate-800/40"></div>
+                <div id="service-options-list" class="max-h-60 overflow-y-auto custom-dropdown-scroll divide-y divide-slate-800/40">
+                  <div class="p-4 text-xs text-slate-500 text-center">Loading live services...</div>
+                </div>
               </div>
             </div>
 
@@ -564,29 +566,35 @@
       if (window.innerWidth < 768) sidebar.classList.add('-translate-x-full');
     }
 
-    async function loadServices() {
-      try {
-        const res = await fetch('/api/services');
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          // Apply 65% markup (multiplying base API rates by 1.65)
-          rawServicesList = data.map(s => {
-            const baseRate = parseFloat(s.rate || 0);
-            const markedUpRate = baseRate * 1.65;
-            return {
-              ...s,
-              rate: markedUpRate.toFixed(2)
-            };
-          });
+    async function loadServices(retries = 3) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const res = await fetch('/api/services');
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            rawServicesList = data.map(s => {
+              const baseRate = parseFloat(s.rate || 0);
+              const markedUpRate = baseRate * 1.65;
+              return {
+                ...s,
+                rate: markedUpRate.toFixed(2)
+              };
+            });
 
-          document.getElementById('stat-active-services').innerText = rawServicesList.length;
-          renderServicesDropdownList(rawServicesList);
-          
-          if (rawServicesList.length > 0) {
-            selectServiceOption(rawServicesList[0].service || rawServicesList[0].id, `[${rawServicesList[0].service || rawServicesList[0].id}] ${rawServicesList[0].name} - ₦${rawServicesList[0].rate} per 1000`, rawServicesList[0].rate);
+            document.getElementById('stat-active-services').innerText = rawServicesList.length;
+            renderServicesDropdownList(rawServicesList);
+            
+            const firstService = rawServicesList[0];
+            const sId = firstService.service || firstService.id;
+            selectServiceOption(sId, `[${sId}] ${firstService.name} - ₦${firstService.rate} per 1000`, firstService.rate);
+            return;
           }
+        } catch (err) {
+          console.warn(`Attempt ${i + 1} failed to load services. Retrying...`);
         }
-      } catch (err) {}
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+      document.getElementById('service-options-list').innerHTML = `<div class="p-4 text-xs text-rose-400 text-center">Failed to load services. Please refresh page.</div>`;
     }
 
     function toggleServiceDropdown() {
@@ -600,7 +608,7 @@
     function renderServicesDropdownList(services) {
       const container = document.getElementById('service-options-list');
       container.innerHTML = '';
-      if (services.length === 0) {
+      if (!services || services.length === 0) {
         container.innerHTML = `<div class="p-4 text-xs text-slate-500 text-center">No services found</div>`;
         return;
       }
@@ -635,7 +643,7 @@
 
     function filterServicesList(query) {
       const q = query.toLowerCase();
-      const filtered = rawServicesList.filter(s => s.name.toLowerCase().includes(q) || (s.service || s.id).toString().includes(q) || s.category.toLowerCase().includes(q));
+      const filtered = rawServicesList.filter(s => s.name.toLowerCase().includes(q) || (s.service || s.id).toString().includes(q) || (s.category || '').toLowerCase().includes(q));
       renderServicesDropdownList(filtered);
     }
 
@@ -704,7 +712,7 @@
         showToast('Network error placing order', true);
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i><span>Submit Order</span>`;
+        submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"><span>Submit Order</span>`;
       }
     }
 
