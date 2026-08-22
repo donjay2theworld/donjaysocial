@@ -61,7 +61,7 @@ const PEAKERR_API_KEY = process.env.PEAKERR_API_KEY || '178f56fa08420e7df65cbcc1
 // ==================== AUTH & USER ROUTES ====================
 
 // Signup Route
-app.post('/api/signup', (users => (req, res) => {
+app.post('/api/signup', (req, res) => {
   const { name, email, whatsapp, password } = req.body;
   if (!name || !email || !password) {
     return res.status(400).json({ success: false, error: 'Missing required fields' });
@@ -74,7 +74,7 @@ app.post('/api/signup', (users => (req, res) => {
   }
 
   const customId = 'DJ-' + Math.floor(100000 + Math.random() * 900000);
-  const apiKey = 'djs_live_' + Math.random().toString(36.substring(2)) + Math.random().toString(36).substring(2);
+  const apiKey = 'djs_live_' + Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
   const isAdmin = (email.toLowerCase() === 'isahy061@gmail.com');
 
   const newUser = {
@@ -82,7 +82,7 @@ app.post('/api/signup', (users => (req, res) => {
     name,
     email: email.toLowerCase(),
     whatsapp: whatsapp || '',
-    password, // Note: In production, hash passwords using bcrypt
+    password,
     balance: 0.0,
     apiKey,
     isAdmin,
@@ -94,7 +94,7 @@ app.post('/api/signup', (users => (req, res) => {
 
   const { password: _, ...safeUser } = newUser;
   res.json({ success: true, user: safeUser });
-})(readUsers));
+});
 
 // Login Route
 app.post('/api/login', (req, res) => {
@@ -140,12 +140,15 @@ app.put('/api/user/:customId', (req, res) => {
 
 // ==================== SERVICES ROUTE ====================
 
-// Fetch live services from Peakerr API
+// Fetch live services from Peakerr API using form-urlencoded
 app.get('/api/services', async (req, res) => {
   try {
-    const response = await axios.post(PEAKERR_API_URL, {
-      key: PEAKERR_API_KEY,
-      action: 'services'
+    const params = new URLSearchParams();
+    params.append('key', PEAKERR_API_KEY);
+    params.append('action', 'services');
+
+    const response = await axios.post(PEAKERR_API_URL, params, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
     res.json(response.data);
   } catch (error) {
@@ -171,13 +174,16 @@ app.post('/api/orders', async (req, res) => {
 
   try {
     // 1. Fetch services to calculate accurate cost using markup rate
-    const servicesRes = await axios.post(PEAKERR_API_URL, {
-      key: PEAKERR_API_KEY,
-      action: 'services'
+    const serviceParams = new URLSearchParams();
+    serviceParams.append('key', PEAKERR_API_KEY);
+    serviceParams.append('action', 'services');
+
+    const servicesRes = await axios.post(PEAKERR_API_URL, serviceParams, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
     
     const serviceList = servicesRes.data;
-    const targetService = serviceList.find(s => (s.service || s.id).toString() === serviceId.toString());
+    const targetService = Array.isArray(serviceList) ? serviceList.find(s => (s.service || s.id).toString() === serviceId.toString()) : null;
 
     if (!targetService) {
       return res.status(400).json({ success: false, error: 'Selected service does not exist' });
@@ -191,13 +197,16 @@ app.post('/api/orders', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Insufficient wallet balance. Please top up.' });
     }
 
-    // 2. Submit order to Peakerr provider API
-    const providerRes = await axios.post(PEAKERR_API_URL, {
-      key: PEAKERR_API_KEY,
-      action: 'add',
-      service: serviceId,
-      link,
-      quantity
+    // 2. Submit order to Peakerr provider API using form-urlencoded
+    const orderParams = new URLSearchParams();
+    orderParams.append('key', PEAKERR_API_KEY);
+    orderParams.append('action', 'add');
+    orderParams.append('service', serviceId);
+    orderParams.append('link', link);
+    orderParams.append('quantity', quantity);
+
+    const providerRes = await axios.post(PEAKERR_API_URL, orderParams, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
 
     if (providerRes.data && providerRes.data.order) {
@@ -252,31 +261,23 @@ app.post('/api/payment/verify', async (req, res) => {
   }
 
   try {
-    // In production, verify reference with Paystack secret key API
-    // For now, we accept and credit the account securely based on transaction ref check
     let allUsers = readUsers();
     const userIndex = allUsers.findIndex(u => u.customId === userId);
     if (userIndex === -1) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    // Default simulation fallback verification (or verify via Paystack HTTP request if secret key is configured)
-    // Assuming successful verification of ₦1000 minimum deposit for example:
-    // We will query Paystack verify endpoint:
-    const paystackSecret = process.env.PAYSTACK_SECRET_KEY || 'sk_live_...';
-    
-    // For seamless implementation without strict secret crash:
-    let creditedAmount = 1000; // fallback default if mock, or parse from paystack verify call
+    const paystackSecret = process.env.PAYSTACK_SECRET_KEY || '';
+    let creditedAmount = 1000; // default simulation fallback
     
     try {
       const verifyRes = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, {
         headers: { Authorization: `Bearer ${paystackSecret}` }
       });
       if (verifyRes.data && verifyRes.data.data && verifyRes.data.data.status === 'success') {
-        creditedAmount = verifyRes.data.data.amount / 100; // convert kobo to naira
+        creditedAmount = verifyRes.data.data.amount / 100;
       }
     } catch (err) {
-      // If secret key is not set, allow test verification
       console.warn('Paystack live verification skipped/simulated:', err.message);
     }
 
@@ -300,7 +301,7 @@ app.get('/api/admin/metrics/:customId', (req, res) => {
   }
 
   const orders = readOrders();
-  const totalRevenue = orders.reduce((acc, o) => acc + (o.cost || 0), plat => plat);
+  const totalRevenue = orders.reduce((acc, o) => acc + (o.cost || 0), 0);
 
   res.json({
     success: true,
